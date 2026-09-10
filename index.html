@@ -1,0 +1,3394 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>عيادة النور — نظام الحجز</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0B1615; --bg-1:#101F1D; --bg-2:#152925; --bg-3:#1B332E;
+    --teal:#3FA98C; --teal-wash:rgba(63,169,140,0.12);
+    --amber:#D6A24C; --amber-wash:rgba(214,162,76,0.14);
+    --rust:#C97456; --rust-wash:rgba(201,116,86,0.14);
+    --line:#22332F; --line-strong:#324743;
+    --text-0:#F3F7F5; --text-1:#C7D6D1; --text-2:#8AA39C;
+    --teal-text:#BFE9DA; --amber-text:#EFD09C; --rust-text:#E6BBAB;
+    --shadow:none;
+    --radius:12px;
+  }
+  body.theme-light{
+    --bg-0:#F6F8F7; --bg-1:#FFFFFF; --bg-2:#EFF3F1; --bg-3:#E6ECE9;
+    --teal:#2C8F73; --teal-wash:rgba(44,143,115,0.10);
+    --amber:#B8811F; --amber-wash:rgba(184,129,31,0.12);
+    --rust:#B4593B; --rust-wash:rgba(180,89,59,0.12);
+    --line:#E1E7E4; --line-strong:#CBD5D1;
+    --text-0:#132420; --text-1:#3D544D; --text-2:#6F857D;
+    --teal-text:#1F7A5C; --amber-text:#8A5F13; --rust-text:#94402A;
+    --shadow:0 1px 2px rgba(19,36,32,0.06);
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;margin:0;}
+  body{font-family:'IBM Plex Sans Arabic', Tahoma, sans-serif;background:var(--bg-0);color:var(--text-0);-webkit-font-smoothing:antialiased;transition:background-color .25s ease,color .25s ease;}
+  body.sidebar-locked{overflow:hidden;}
+  body, .topnav, .sidebar, .table-card, .settings-section, .stat, .calendar-day, .calendar-appt,
+  .doctor-card, .service-card, .form-group input, .form-group select, .select-field,
+  .search-bar, .login-card, .badge, .icon-btn, .nav-item, .day-toggle, .file-btn, .avatar,
+  .avatar-sm, .logo-preview, .login-logo{transition:background-color .2s ease,border-color .2s ease,color .2s ease;}
+  button{font-family:inherit;cursor:pointer;}
+  input,select{font-family:inherit;}
+
+  .topnav{display:flex;align-items:center;justify-content:space-between;padding:16px 32px;border-bottom:1px solid var(--line);background:var(--bg-1);flex-wrap:wrap;gap:12px;}
+  .brand{display:flex;align-items:center;gap:10px;}
+  .brand-mark{width:30px;height:30px;border-radius:8px;background:var(--teal);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--bg-0);font-size:14px;}
+  .brand-name{font-size:15px;font-weight:600;}
+  .nav-tabs{display:flex;gap:6px;}
+  .nav-tabs a{background:transparent;border:1px solid transparent;color:var(--text-2);padding:8px 18px;border-radius:999px;font-size:13.5px;text-decoration:none;cursor:pointer;}
+  .nav-tabs a.active{background:var(--bg-3);border-color:var(--line-strong);color:var(--text-0);font-weight:500;}
+  .topnav-actions{display:flex;align-items:center;gap:12px;}
+  .theme-toggle{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:10px;background:var(--bg-2);border:1px solid var(--line-strong);color:var(--text-1);flex-shrink:0;}
+  .theme-toggle:hover{color:var(--text-0);border-color:var(--teal);}
+  .theme-toggle svg{width:17px;height:17px;}
+  .theme-toggle-floating{position:fixed;top:18px;left:18px;z-index:60;}
+
+  .toast-host{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:100;display:flex;flex-direction:column-reverse;gap:10px;width:min(380px,calc(100vw - 32px));pointer-events:none;}
+  .toast{pointer-events:auto;display:flex;align-items:flex-start;gap:10px;background:var(--bg-1);border:1px solid var(--line-strong);border-inline-start:3px solid var(--teal);border-radius:10px;padding:12px 14px;box-shadow:0 8px 24px rgba(0,0,0,0.28);animation:toast-in .25s ease;}
+  body.theme-light .toast{box-shadow:0 8px 20px rgba(19,36,32,0.12);}
+  .toast-success{border-inline-start-color:var(--teal);}
+  .toast-error{border-inline-start-color:var(--rust);}
+  .toast-info{border-inline-start-color:var(--amber);}
+  .toast-icon{flex-shrink:0;width:19px;height:19px;margin-top:1px;}
+  .toast-icon svg{width:100%;height:100%;}
+  .toast-success .toast-icon{color:var(--teal);}
+  .toast-error .toast-icon{color:var(--rust);}
+  .toast-info .toast-icon{color:var(--amber);}
+  .toast-text{flex:1;font-size:13px;color:var(--text-0);line-height:1.5;}
+  .toast-close{flex-shrink:0;background:none;border:none;color:var(--text-2);font-size:12px;padding:2px 4px;cursor:pointer;}
+  .toast-close:hover{color:var(--text-0);}
+  @keyframes toast-in{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+  @media (max-width:520px){.toast-host{bottom:14px;}}
+
+  .btn-spinner{display:inline-block;width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,0.35);border-top-color:currentColor;animation:spin .7s linear infinite;flex-shrink:0;}
+  button.is-loading{display:inline-flex;align-items:center;justify-content:center;gap:8px;opacity:0.85;cursor:progress;}
+  .icon-btn.is-loading .btn-spinner,.nav-item.is-loading .btn-spinner{border:2px solid rgba(140,160,155,0.35);border-top-color:var(--text-1);}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .skeleton{border-radius:6px;background:linear-gradient(100deg, var(--bg-2) 30%, var(--bg-3) 45%, var(--bg-2) 60%);background-size:250% 100%;animation:skeleton-shine 1.4s ease-in-out infinite;}
+  .skeleton-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:26px;}
+  .skeleton-stat{height:78px;border-radius:var(--radius);}
+  .skeleton-bar{height:14px;margin-bottom:10px;}
+  .skeleton-row{display:flex;gap:14px;align-items:center;padding:13px 16px;border-bottom:1px solid var(--bg-2);}
+  .skeleton-row .skeleton{flex:1;height:14px;}
+  .skeleton-row .skeleton:first-child{flex:0 0 32px;height:32px;border-radius:50%;}
+  .skeleton-card{background:var(--bg-1);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;}
+  @keyframes skeleton-shine{0%{background-position:200% 0;}100%{background-position:-50% 0;}}
+  @media (max-width:700px){.skeleton-stats{grid-template-columns:1fr;}}
+
+  .bar-chart{display:flex;flex-direction:column;gap:13px;}
+  .bar-chart-row{display:grid;grid-template-columns:120px 1fr 44px;align-items:center;gap:12px;}
+  .bar-chart-label{font-size:12.5px;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .bar-chart-track{background:var(--bg-2);border-radius:999px;height:11px;overflow:hidden;}
+  .bar-chart-fill{height:100%;border-radius:999px;transition:width .5s ease;}
+  .bar-chart-value{font-size:12px;color:var(--text-2);text-align:left;white-space:nowrap;}
+  @media (max-width:520px){.bar-chart-row{grid-template-columns:80px 1fr 38px;gap:8px;}}
+
+  .donut-chart-container{display:flex;align-items:center;justify-content:center;gap:32px;flex-wrap:wrap;padding:6px 0;}
+  .donut-chart-wrap{position:relative;width:176px;height:176px;flex-shrink:0;}
+  .donut-chart-svg{width:100%;height:100%;display:block;}
+  .donut-chart-svg circle{transition:stroke-dasharray .5s ease;}
+  .donut-chart-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .donut-chart-total{font-size:24px;font-weight:700;color:var(--text-0);}
+  .donut-chart-total-label{font-size:11.5px;color:var(--text-2);margin-top:2px;}
+  .donut-legend{display:flex;flex-direction:column;gap:10px;min-width:190px;}
+  .donut-legend-item{display:flex;align-items:center;gap:9px;font-size:13px;}
+  .donut-legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+  .donut-legend-label{flex:1;color:var(--text-0);font-weight:500;}
+  .donut-legend-value{color:var(--text-2);font-size:12px;white-space:nowrap;}
+
+  .vbar-chart{display:flex;align-items:flex-end;gap:16px;height:210px;padding:10px 4px 0;overflow-x:auto;}
+  .vbar-col{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:50px;flex:1;}
+  .vbar-value{font-size:11.5px;color:var(--text-2);margin-bottom:6px;white-space:nowrap;}
+  .vbar-track{width:28px;flex:1;display:flex;align-items:flex-end;background:var(--bg-2);border-radius:6px 6px 0 0;overflow:hidden;}
+  .vbar-fill{width:100%;border-radius:6px 6px 0 0;transition:height .5s ease;}
+  .vbar-label{font-size:11px;color:var(--text-1);margin-top:8px;max-width:74px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;}
+  @media (max-width:520px){.vbar-chart{gap:8px;}.vbar-col{min-width:40px;}}
+
+  .container{display:grid;grid-template-columns:230px 1fr;min-height:calc(100vh - 63px);}
+  .sidebar{background:var(--bg-1);border-left:1px solid var(--line);padding:28px 14px;}
+  .nav-group-label{font-size:11px;color:var(--text-2);padding:16px 12px 8px;font-weight:500;}
+  .nav-group-label:first-child{padding-top:2px;}
+  .nav-item{position:relative;display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;font-size:13.5px;color:var(--text-2);margin-bottom:2px;background:transparent;border:none;width:100%;text-align:right;transition:background .15s ease,color .15s ease;}
+  .nav-item:hover{background:var(--bg-2);color:var(--text-1);}
+  .nav-item.active{background:linear-gradient(90deg, var(--teal-wash), rgba(63,169,140,0.03));color:var(--text-0);font-weight:500;}
+  .nav-item.active .nav-icon{color:var(--teal);}
+  .nav-item.active::after{content:'';position:absolute;top:8px;bottom:8px;right:4px;width:3px;border-radius:3px;background:var(--teal);}
+  .nav-icon{width:18px;height:18px;flex-shrink:0;color:var(--text-2);display:flex;transition:color .15s ease;}
+  .nav-icon svg{width:100%;height:100%;}
+  .role-hint{background:var(--amber-wash);color:var(--amber-text);font-size:11.5px;padding:10px 12px;border-radius:10px;margin-bottom:16px;text-align:center;line-height:1.5;}
+
+  .hamburger-btn{display:none;align-items:center;justify-content:center;width:34px;height:34px;border-radius:9px;background:var(--bg-2);border:1px solid var(--line-strong);color:var(--text-1);flex-shrink:0;}
+  .hamburger-btn svg{width:18px;height:18px;}
+  .sidebar-mobile-head{display:none;align-items:center;justify-content:space-between;padding:2px 6px 18px;font-size:14px;font-weight:600;color:var(--text-0);border-bottom:1px solid var(--line);margin-bottom:12px;}
+  .sidebar-close-btn{background:none;border:none;color:var(--text-2);font-size:15px;padding:4px 8px;cursor:pointer;}
+  .sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:65;opacity:0;transition:opacity .2s ease;}
+  .sidebar-backdrop.show{display:block;opacity:1;}
+
+  .main{padding:30px 34px;position:relative;}
+  .topbar{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;flex-wrap:wrap;gap:14px;}
+  .topbar h1{font-size:21px;font-weight:600;margin:0 0 4px;}
+  .topbar .subtitle{font-size:13px;color:var(--text-2);}
+  .btn-primary{background:var(--teal);color:var(--bg-0);border:none;padding:11px 20px;border-radius:9px;font-size:13.5px;font-weight:600;}
+
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:26px;}
+  .stat{background:var(--bg-1);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;}
+  .stat .label{font-size:12.5px;color:var(--text-2);margin-bottom:8px;}
+  .stat .value{font-size:25px;font-weight:600;color:var(--teal);}
+  .stat .value.amber{color:var(--amber);}
+
+  .table-card{background:var(--bg-1);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;overflow-x:auto;}
+  .data-table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:560px;}
+  .data-table th{text-align:right;padding:13px 16px;color:var(--text-2);font-weight:500;border-bottom:1px solid var(--line);font-size:12.5px;}
+  .data-table td{padding:13px 16px;border-bottom:1px solid var(--bg-2);color:var(--text-1);}
+  .data-table tr:last-child td{border-bottom:none;}
+  .name-cell{display:flex;align-items:center;gap:10px;color:var(--text-0);font-weight:500;}
+  .avatar-sm{width:32px;height:32px;border-radius:50%;background:var(--teal-wash);color:var(--teal-text);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;flex-shrink:0;}
+  .badge{padding:4px 11px;border-radius:999px;font-size:11.5px;font-weight:500;display:inline-block;}
+  .badge.confirmed,.badge.active{background:var(--teal-wash);color:var(--teal-text);}
+  .badge.pending{background:var(--amber-wash);color:var(--amber-text);}
+  .badge.cancelled,.badge.inactive{background:var(--bg-2);color:var(--text-2);}
+  .badge.salary{background:var(--teal-wash);color:var(--teal-text);}
+  .badge.expense{background:var(--rust-wash);color:var(--rust-text);}
+  .badge.visit-normal{background:var(--bg-2);color:var(--text-1);}
+  .badge.visit-urgent{background:var(--rust-wash);color:var(--rust-text);}
+  .badge.visit-followup{background:var(--amber-wash);color:var(--amber-text);}
+  .search-bar{display:flex;align-items:center;gap:8px;background:var(--bg-1);border:1px solid var(--line);border-radius:9px;padding:9px 14px;margin-bottom:18px;max-width:320px;}
+  .search-bar input{background:transparent;border:none;color:var(--text-0);font-size:13.5px;width:100%;outline:none;}
+  .search-bar input::placeholder{color:var(--text-2);}
+  .list-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:18px;}
+  .list-toolbar .search-bar{margin-bottom:0;}
+  .filter-select{background:var(--bg-1);border:1px solid var(--line);color:var(--text-1);font-size:13px;padding:9px 12px;border-radius:9px;min-width:140px;}
+  .filter-select:focus{outline:none;border-color:var(--teal);}
+  .empty-hint{color:var(--text-2);font-size:13px;padding:24px;text-align:center;}
+
+.settings-section{background:var(--bg-1);border:1px solid var(--line);border-radius:var(--radius);padding:22px;margin-bottom:20px;}
+.settings-section h2{font-size:15px;font-weight:600;margin:0 0 16px;}
+.logo-row{display:flex;align-items:center;gap:16px;}
+.logo-preview{width:64px;height:64px;border-radius:12px;background:var(--teal-wash);color:var(--teal-text);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:22px;overflow:hidden;flex-shrink:0;}
+.logo-preview img{width:100%;height:100%;object-fit:cover;}
+.file-btn{display:inline-block;background:var(--bg-2);border:1px solid var(--line-strong);color:var(--text-1);padding:9px 16px;border-radius:8px;font-size:13px;}
+.file-btn input{display:none;}
+.days-grid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+.day-toggle{padding:8px 14px;border-radius:999px;border:1px solid var(--line-strong);background:var(--bg-2);color:var(--text-2);font-size:12.5px;}
+.day-toggle.on{background:var(--teal-wash);border-color:var(--teal);color:var(--teal-text);}
+.hours-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.price-cell{color:var(--amber);font-weight:600;}
+
+  .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;overflow-x:auto;}
+  .calendar-day{background:var(--bg-1);border:1px solid var(--line);border-radius:10px;min-width:112px;display:flex;flex-direction:column;}
+  .calendar-day-head{padding:6px 8px;font-size:11px;font-weight:600;color:var(--text-0);border-bottom:1px solid var(--line);text-align:center;}
+  .calendar-day-body{padding:6px;display:flex;flex-direction:column;gap:5px;min-height:60px;}
+  .calendar-appt{background:var(--bg-2);border:1px solid var(--line);border-inline-start:3px solid var(--line-strong);border-radius:6px;padding:5px 7px;}
+  .calendar-appt.visit-urgent{border-inline-start-color:var(--rust);}
+  .calendar-appt.visit-followup{border-inline-start-color:var(--amber);}
+  .calendar-appt-row{display:flex;align-items:baseline;gap:5px;}
+  .calendar-appt-time{font-size:10.5px;font-weight:600;color:var(--teal-text);flex-shrink:0;}
+  .calendar-appt-name{font-size:11.5px;font-weight:500;color:var(--text-0);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .calendar-appt-doctor{font-size:9.5px;color:var(--text-2);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .calendar-appt .badge{padding:2px 7px;font-size:9.5px;margin-top:3px;}
+  @media (max-width:900px){
+    .calendar-grid{grid-template-columns:repeat(7,112px);}
+  }
+
+  .row-actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .icon-btn{background:transparent;border:1px solid var(--line-strong);color:var(--text-1);padding:6px 12px;border-radius:7px;font-size:12px;white-space:nowrap;}
+  .icon-btn.danger{color:var(--rust-text);border-color:rgba(201,116,86,0.4);}
+  .icon-btn.confirm{color:var(--teal-text);border-color:rgba(63,169,140,0.4);}
+  .icon-btn.whatsapp-general{color:var(--text-1);border-color:var(--line-strong);}
+  .icon-btn.whatsapp-reminder{background:rgba(37,211,102,0.12);color:#1f9b57;border-color:rgba(37,211,102,0.45);font-weight:600;}
+
+  /* ===== Booking Page ===== */
+  .booking-page{display:flex;justify-content:center;padding:48px 20px 70px;}
+  .booking-wrap{max-width:480px;width:100%;}
+  .booking-header{text-align:center;margin-bottom:30px;}
+  .booking-header h1{font-size:23px;font-weight:600;margin:0 0 6px;}
+  .booking-header p{font-size:13.5px;color:var(--text-2);margin:0;}
+  .section-label{font-size:13px;color:var(--text-2);margin:0 0 10px;font-weight:500;}
+
+  .service-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:26px;}
+  .service-card{display:flex;flex-direction:column;align-items:center;gap:10px;padding:20px;background:var(--bg-1);border:2px solid var(--line);border-radius:var(--radius);transition:all .2s ease;}
+  .service-card:hover{border-color:var(--teal);background:var(--bg-2);}
+  .service-card.selected{background:var(--teal-wash);border-color:var(--teal);}
+  .service-icon{font-size:28px;}
+  .service-name{font-size:14px;font-weight:500;color:var(--text-0);text-align:center;}
+
+  .card-list{display:flex;flex-direction:column;gap:10px;margin-bottom:28px;}
+  .doctor-card{display:flex;align-items:center;gap:12px;background:var(--bg-1);border:1px solid var(--line);border-radius:var(--radius);padding:15px 17px;width:100%;text-align:right;}
+  .doctor-card.selected{border-color:var(--teal);background:var(--bg-2);}
+  .avatar{width:40px;height:40px;border-radius:50%;background:var(--teal-wash);color:var(--teal-text);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;flex-shrink:0;}
+  .doctor-card h3{font-size:14px;font-weight:500;margin:0 0 2px;color:var(--text-0);}
+  .doctor-card p{font-size:12px;color:var(--text-2);margin:0;}
+
+  .form-group{margin-bottom:14px;}
+  .form-group label{display:block;font-size:12.5px;color:var(--text-2);margin-bottom:6px;}
+  .form-group input,.form-group select,.select-field{width:100%;padding:12px 13px;border:1px solid var(--line);border-radius:8px;font-size:13.5px;background:var(--bg-1);color:var(--text-0);}
+  .form-group input::placeholder{color:var(--text-2);}
+  .form-group input.field-error,.form-group select.field-error{border-color:var(--rust);background:rgba(201,116,86,0.05);}
+  .form-group input:disabled,.form-group select:disabled{opacity:0.6;cursor:not-allowed;}
+  .field-error-message{display:none;color:var(--rust-text);font-size:12px;margin-top:4px;}
+  .field-error + .field-error-message{display:block;}
+  .btn-primary:disabled{opacity:0.5;cursor:not-allowed;}
+  .btn-primary:disabled:hover{opacity:0.5;}
+  .password-wrapper{position:relative;}
+  .password-wrapper input{padding-left:40px;}
+  .password-toggle{position:absolute;top:50%;left:8px;transform:translateY(-50%);background:none;border:none;padding:6px;cursor:pointer;color:var(--text-2);display:flex;align-items:center;justify-content:center;border-radius:6px;}
+  .password-toggle:hover{color:var(--text-0);}
+  .password-toggle svg{width:18px;height:18px;display:block;}
+  input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8);cursor:pointer;}
+
+  .time-picker-group{background:var(--bg-1);border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:14px;}
+  .time-picker-row{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:8px;align-items:flex-end;}
+  .time-input-wrapper{display:flex;flex-direction:column;}
+  .time-input-wrapper label{font-size:12px;color:var(--text-2);margin-bottom:6px;text-align:center;}
+  .time-separator{color:var(--text-1);font-size:18px;font-weight:600;text-align:center;padding-bottom:5px;}
+  .time-select{width:100%;padding:10px 8px;border:1px solid var(--line);border-radius:6px;font-size:14px;background:var(--bg-2);color:var(--text-0);font-weight:500;text-align:center;}
+  .time-select:focus{outline:none;border-color:var(--teal);}
+
+  .summary-card{background:var(--bg-2);border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:22px;}
+  .summary-card h3{margin-top:0;margin-bottom:12px;color:var(--teal-text);font-size:15px;}
+  .summary-card .row{display:flex;justify-content:space-between;font-size:13px;padding:7px 0;color:var(--text-0);}
+  .summary-card .row+.row{border-top:1px solid var(--line);}
+  .summary-card .row span:first-child{color:var(--text-2);}
+
+  .confirm-btn{width:100%;background:var(--teal);color:var(--bg-0);border:none;padding:15px;border-radius:10px;font-size:14.5px;font-weight:600;}
+  .confirm-btn:hover{opacity:.9;}
+
+  .success-box{background:var(--teal-wash);border:1px solid rgba(63,169,140,.35);border-radius:var(--radius);padding:24px;text-align:center;}
+  .success-box h3{margin:0 0 6px;font-size:16px;color:var(--teal-text);}
+  .success-box p{margin:0 0 16px;font-size:13px;color:var(--text-1);}
+
+  /* ===== Login ===== */
+  .login-page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .login-card{background:var(--bg-1);border:1px solid var(--line);border-radius:var(--radius);padding:34px 30px;max-width:360px;width:100%;text-align:center;}
+  .login-logo{width:56px;height:56px;border-radius:14px;background:var(--teal-wash);color:var(--teal-text);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;margin:0 auto 16px;overflow:hidden;}
+  .login-card h1{font-size:18px;font-weight:600;margin:0 0 4px;}
+  .login-sub{font-size:13px;color:var(--text-2);margin:0 0 22px;}
+  .login-card .form-group{text-align:right;}
+  .login-error{color:var(--rust-text);font-size:12.5px;margin:-6px 0 14px;}
+  .notice-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-radius:var(--radius);font-size:13px;margin-bottom:18px;}
+  .notice-banner.success{background:var(--teal-wash);border:1px solid rgba(63,169,140,.35);color:var(--teal-text);}
+  .notice-banner.error{background:var(--rust-wash);border:1px solid rgba(201,116,86,.35);color:#F0C7B8;}
+  .notice-banner button{background:none;border:none;color:inherit;cursor:pointer;font-size:16px;line-height:1;padding:0 2px;}
+  .nav-tabs a.logout-link{color:var(--rust-text);}
+
+  /* ===== Patient Profile ===== */
+  .patient-profile-header{display:flex;align-items:center;gap:14px;background:var(--bg-1);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;margin-bottom:20px;flex-wrap:wrap;}
+  .link-cell{background:transparent;border:none;cursor:pointer;padding:0;font:inherit;color:var(--text-0);}
+  .link-cell:hover{color:var(--teal-text);text-decoration:underline;}
+  .timeline{display:flex;flex-direction:column;gap:0;}
+  .timeline-item{display:flex;gap:12px;padding-bottom:18px;position:relative;}
+  .timeline-item:not(:last-child)::before{content:'';position:absolute;top:20px;right:5px;width:1px;height:calc(100% - 8px);background:var(--line-strong);}
+  .timeline-dot{width:11px;height:11px;border-radius:50%;background:var(--teal);flex-shrink:0;margin-top:5px;}
+  .timeline-content{flex:1;background:var(--bg-2);border:1px solid var(--line);border-radius:9px;padding:12px 14px;}
+  .timeline-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:6px;}
+  .timeline-title{font-weight:600;font-size:13.5px;color:var(--text-0);}
+  .timeline-date{font-size:11.5px;color:var(--text-2);}
+  .timeline-note{font-size:13px;color:var(--text-1);margin:0 0 8px;line-height:1.6;}
+  .form-group textarea{width:100%;padding:12px 13px;border:1px solid var(--line);border-radius:8px;font-size:13.5px;background:var(--bg-1);color:var(--text-0);font-family:inherit;resize:vertical;}
+
+  /* ===== Modal ===== */
+  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:flex-start;justify-content:center;padding:60px 20px;z-index:50;overflow-y:auto;}
+  .modal-card{background:var(--bg-1);border:1px solid var(--line-strong);border-radius:var(--radius);padding:24px;max-width:420px;width:100%;}
+  .modal-card h2{font-size:17px;font-weight:600;margin:0 0 18px;}
+  .modal-actions{display:flex;gap:10px;margin-top:6px;}
+  .modal-actions button{flex:1;padding:11px;border-radius:9px;font-size:13.5px;border:none;}
+  .modal-actions .save{background:var(--teal);color:var(--bg-0);font-weight:600;}
+  .modal-actions .cancel{background:transparent;border:1px solid var(--line-strong);color:var(--text-1);}
+
+  @media (max-width:900px){
+    .hamburger-btn{display:flex;}
+    .container{grid-template-columns:1fr;}
+    .sidebar{
+      position:fixed;top:0;right:0;bottom:0;width:255px;max-width:82vw;
+      z-index:70;transform:translateX(100%);transition:transform .28s ease;
+      overflow-y:auto;box-shadow:-14px 0 34px rgba(0,0,0,0.32);
+      display:block;
+    }
+    .sidebar.open{transform:translateX(0);}
+    .sidebar-mobile-head{display:flex;}
+    body.theme-light .sidebar{box-shadow:-14px 0 30px rgba(19,36,32,0.14);}
+  }
+
+  @media (max-width:640px){
+    .stats{grid-template-columns:1fr;}
+    .service-grid{grid-template-columns:1fr;}
+    .time-picker-row{grid-template-columns:1fr auto 1fr;}
+    .time-input-wrapper:last-child{grid-column:1 / -1;}
+  }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+<div id="app"></div>
+<div id="toastHost" class="toast-host" aria-live="polite"></div>
+
+<script>
+/* ====================== الحالة (State) ====================== */
+const TODAY_ISO = '2026-09-06'; // تاريخ "اليوم" المرجعي في هذه النسخة التجريبية
+const state = {
+  currentPage: 'dashboard',
+  theme: 'dark', // 'dark' | 'light'
+  pageLoading: false,
+  sidebarOpen: false,
+  modal: null, // { type: 'patient'|'doctor'|'appointment'|'medical', editingId: number|null }
+
+  auth: { loggedIn: false, role: null }, // role: 'admin' | 'staff'
+  loginError: false,
+  loginNotice: null,
+  forgotPasswordStep: 'question', // 'question' | 'reset'
+  forgotPasswordError: false,
+  selectedPatientId: null,
+  pendingImportData: null,
+  importNotice: null,
+  settingsNotice: null,
+  activityLog: [],
+  calendarWeekStart: '2026-09-05', // السبت قبل الأحد ٦ سبتمبر٢٠٢٦ (المرجع الحالي للتطبيق)
+
+  doctors: [
+    { id: 1, name: 'د. أحمد سامي', initials: 'أس', specialty: 'استشاري باطنة', status: 'active', phone: '01055512345',
+      workingDays: ['السبت', 'الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء'], workingFrom: '09:00', workingTo: '15:00' },
+    { id: 2, name: 'د. سارة فؤاد', initials: 'سف', specialty: 'أخصائية جلدية', status: 'active', phone: '01066678901',
+      workingDays: ['الأحد', 'الثلاثاء', 'الخميس'], workingFrom: '14:00', workingTo: '21:00' },
+    { id: 3, name: 'د. محمود يسري', initials: 'مي', specialty: 'استشاري عظام', status: 'inactive', phone: '01077734567',
+      workingDays: ['السبت', 'الإثنين', 'الأربعاء'], workingFrom: '10:00', workingTo: '18:00' },
+  ],
+  patients: [
+    { id: 1, name: 'منى إبراهيم', initials: 'من', phone: '01012345678', visits: 6, lastVisit: '٦ سبتمبر ٢٠٢٦', status: 'active',
+      allergies: 'حساسية من البنسلين', chronicConditions: 'ضغط الدم',
+      medicalHistory: [
+        { id: 1, date: '٦ سبتمبر ٢٠٢٦', title: 'كشف عام', note: 'تم قياس الضغط ١٤٠/٩٠، صرف علاج خافض ضغط ومتابعة بعد أسبوعين.' },
+        { id: 2, date: '١٠ يوليو ٢٠٢٦', title: 'متابعة', note: 'تحسن ملحوظ في قراءات الضغط، تم تعديل الجرعة.' },
+      ] },
+    { id: 2, name: 'كريم عادل', initials: 'كع', phone: '01098765432', visits: 2, lastVisit: '٣ سبتمبر ٢٠٢٦', status: 'active',
+      allergies: '', chronicConditions: '', medicalHistory: [] },
+    { id: 3, name: 'هدى وائل', initials: 'هو', phone: '01123456789', visits: 1, lastVisit: '٢٨ أغسطس ٢٠٢٦', status: 'inactive',
+      allergies: '', chronicConditions: '', medicalHistory: [] },
+  ],
+  appointments: [
+    { id: 1, doctorId: 1, patientName: 'منى إبراهيم', service: 'كشف', visitType: 'عادي', date: 'الأحد ٦ سبتمبر', dateISO: '2026-09-06', time: '٩:٠٠ ص', timeKey: '09:00', status: 'confirmed', paid: true },
+    { id: 2, doctorId: 2, patientName: 'كريم عادل', service: 'متابعة', visitType: 'متابعة', date: 'الأحد ٦ سبتمبر', dateISO: '2026-09-06', time: '١٠:٠٠ ص', timeKey: '10:00', status: 'pending', paid: false },
+    { id: 3, doctorId: 1, patientName: 'هدى وائل', service: 'كشف', visitType: 'مستعجل', date: 'الأحد ٦ سبتمبر', dateISO: '2026-09-06', time: '١١:٠٠ ص', timeKey: '11:00', status: 'cancelled', paid: false },
+  ],
+  nextId: { patient: 100, doctor: 100, appointment: 100, service: 100, medicalEntry: 100, expense: 100, activity: 1, toast: 1 },
+  toasts: [], // { id, text, type: 'success'|'error'|'info' }
+
+  settings: {
+    clinicName: 'عيادة النور',
+    password: 'admin123',
+    staffPassword: 'staff123', // كلمة سر بصلاحيات محدودة: حجز/تأكيد/إلغاء المواعيد، عرض التقويم، وإضافة مرضى فقط
+    logo: null, // base64 data URL أو null (يستخدم أول حرف من الاسم)
+    securityQuestion: 'ما اسم أول مدرسة التحقت بها؟',
+    securityAnswer: 'النور',
+    workingDays: ['السبت', 'الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'],
+    workingFrom: '09:00',
+    workingTo: '21:00',
+  },
+  services: [
+    { id: 1, name: 'كشف', price: 150 },
+    { id: 2, name: 'متابعة', price: 80 },
+    { id: 3, name: 'كشف مستعجل', price: 220 },
+  ],
+  expenses: [
+    { id: 1, type: 'salary', name: 'د. أحمد سامي', category: 'راتب طبيب', amount: 8000, date: 'الثلاثاء ١ سبتمبر', dateISO: '2026-09-01', status: 'paid', notes: '' },
+    { id: 2, type: 'salary', name: 'مها عبد الرحمن (استقبال)', category: 'راتب موظف إداري', amount: 3500, date: 'الثلاثاء ١ سبتمبر', dateISO: '2026-09-01', status: 'paid', notes: '' },
+    { id: 3, type: 'expense', name: 'فاتورة الكهرباء', category: 'فواتير', amount: 950, date: 'الثلاثاء ١ سبتمبر', dateISO: '2026-09-01', status: 'paid', notes: '' },
+    { id: 4, type: 'expense', name: 'مستلزمات طبية (شاش وقفازات)', category: 'مستلزمات طبية', amount: 1200, date: 'الأحد ٦ سبتمبر', dateISO: '2026-09-06', status: 'pending', notes: 'تم الطلب من المورد المعتاد' },
+  ],
+
+  patientQuery: '',
+  apptQuery: '',
+  doctorQuery: '',
+  expenseQuery: '',
+  billingQuery: '',
+
+  apptStatusFilter: 'all',
+  apptDateFilter: 'all', // all | today | upcoming | past
+  patientStatusFilter: 'all',
+  doctorStatusFilter: 'all',
+  billingStatusFilter: 'all',
+  expenseTypeFilter: 'all',
+  expenseStatusFilter: 'all',
+
+  booking: { service: null, visitType: null, doctorId: null, date: null, done: false },
+};
+
+// أنواع الكشف المتاحة عند الحجز
+const VISIT_TYPES = [
+  { value: 'عادي', icon: '🕐', hint: 'كشف في الموعد العادي بدون أولوية' },
+  { value: 'مستعجل', icon: '⚡', hint: 'حالة عاجلة تحتاج أقرب معاد ممكن' },
+  { value: 'متابعة', icon: '🔁', hint: 'متابعة لحالة أو زيارة سابقة' },
+];
+
+// تحميل البيانات المحفوظة من localStorage عند بدء التطبيق
+(function initializeApp() {
+  loadStateFromLocalStorage();
+})();
+
+function getDoctorName(id) {
+  const d = state.doctors.find((doc) => doc.id === id);
+  return d ? d.name : 'غير محدد';
+}
+function getActiveDoctors() {
+  return state.doctors.filter((d) => d.status === 'active');
+}
+function isAdmin() {
+  return state.auth.role === 'admin';
+}
+const staffAllowedPages = ['dashboard', 'calendar', 'patients', 'expenses'];
+function isPageAllowed(page) {
+  if (isAdmin()) return true;
+  return staffAllowedPages.includes(page);
+}
+function initials(name) {
+  return name.trim().slice(0, 2);
+}
+function toIntlPhone(phone) {
+  let digits = String(phone || '').replace(/\D/g, '');
+  if (digits.startsWith('0')) digits = '20' + digits.slice(1); // مصر: استبدال الصفر بكود الدولة
+  return digits;
+}
+function whatsappUrl(phone, message) {
+  const digits = toIntlPhone(phone);
+  const text = message ? `?text=${encodeURIComponent(message)}` : '';
+  return `https://wa.me/${digits}${text}`;
+}
+/* ====================== Validation Functions ====================== */
+function validatePhone(phone) {
+  const cleaned = phone.replace(/\D/g, '');
+  return cleaned.length >= 10 && cleaned.length <= 11;
+}
+
+function validateEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function validateName(name) {
+  return name.trim().length >= 2;
+}
+
+function validatePrice(price) {
+  const num = Number(price);
+  return !isNaN(num) && num > 0;
+}
+
+/* ====================== منع تعارض المواعيد ====================== */
+// يحوّل وقت 12 ساعة (المستخدم في صفحة الحجز العامة: ٩، ١٥/٣٠/٤٥، ص/م) إلى صيغة 24 ساعة موحّدة "HH:MM"
+function to24HourKey(hour12, minute, period) {
+  let h = Number(hour12) % 12;
+  if (period === 'م') h += 12;
+  return `${String(h).padStart(2, '0')}:${minute}`;
+}
+
+// يدور على أي موعد تاني (غير ملغي) لنفس الطبيب في نفس اليوم ونفس الوقت بالظبط
+function findApptConflict(doctorId, dateISO, timeKey, excludeId) {
+  if (!doctorId || !dateISO || !timeKey) return null;
+  return state.appointments.find((a) =>
+    a.doctorId === Number(doctorId) &&
+    a.dateISO === dateISO &&
+    a.timeKey === timeKey &&
+    a.status !== 'cancelled' &&
+    a.id !== excludeId
+  ) || null;
+}
+
+function validateFormField(fieldId, validator) {
+  const el = document.getElementById(fieldId);
+  if (!el) return false;
+  const isValid = validator(el.value);
+  el.classList.toggle('field-error', !isValid);
+  return isValid;
+}
+
+/* ====================== LocalStorage Persistence ====================== */
+function saveStateToLocalStorage() {
+  try {
+    localStorage.setItem('clinicAppState', JSON.stringify(state));
+  } catch (e) {
+    console.error('خطأ في حفظ البيانات:', e);
+  }
+}
+
+function loadStateFromLocalStorage() {
+  try {
+    const saved = localStorage.getItem('clinicAppState');
+    if (saved) {
+      const loaded = JSON.parse(saved);
+      // دمج البيانات المحفوظة مع الحالة الحالية
+      Object.assign(state, loaded);
+      // توافق: إضافة أي خدمات افتراضية جديدة غير موجودة في البيانات المحفوظة القديمة (بدون مسح بيانات المستخدم)
+      const defaultServices = [
+        { id: 1, name: 'كشف', price: 150 },
+        { id: 2, name: 'متابعة', price: 80 },
+        { id: 3, name: 'كشف مستعجل', price: 220 },
+      ];
+      if (Array.isArray(state.services)) {
+        defaultServices.forEach((ds) => {
+          const exists = state.services.some((sv) => sv.name === ds.name);
+          if (!exists) {
+            const maxId = state.services.reduce((m, sv) => Math.max(m, sv.id || 0), 0);
+            state.services.push({ id: Math.max(maxId + 1, (state.nextId && state.nextId.service) || 1), name: ds.name, price: ds.price });
+            if (state.nextId) state.nextId.service = Math.max((state.nextId.service || 1), maxId + 2);
+          }
+        });
+      }
+      return true;
+    }
+  } catch (e) {
+    console.error('خطأ في تحميل البيانات:', e);
+  }
+  return false;
+}
+
+// Save state on every significant action
+function saveState() {
+  saveStateToLocalStorage();
+}
+
+function logActivity(text) {
+  state.activityLog.unshift({
+    id: state.nextId.activity++,
+    time: new Date().toLocaleString('ar-EG', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short', year: 'numeric' }),
+    text,
+  });
+  if (state.activityLog.length > 200) state.activityLog.length = 200;
+  showToast(text, 'success');
+  saveState(); // حفظ البيانات
+}
+function showToast(text, type) {
+  const id = state.nextId.toast++;
+  state.toasts.push({ id, text, type: type || 'error' });
+  if (state.toasts.length > 4) state.toasts.shift();
+  renderToasts();
+  setTimeout(() => {
+    state.toasts = state.toasts.filter((t) => t.id !== id);
+    renderToasts();
+  }, 3800);
+}
+function renderToasts() {
+  const host = document.getElementById('toastHost');
+  if (!host) return;
+  const icons = {
+    success: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`,
+    error: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>`,
+    info: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>`,
+  };
+  host.innerHTML = state.toasts.map((t) => `
+    <div class="toast toast-${t.type}" data-toast-id="${t.id}">
+      <span class="toast-icon">${icons[t.type] || icons.info}</span>
+      <span class="toast-text">${esc(t.text)}</span>
+      <button type="button" class="toast-close" data-dismiss-toast="${t.id}" aria-label="إغلاق">✕</button>
+    </div>
+  `).join('');
+  host.querySelectorAll('[data-dismiss-toast]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = Number(btn.dataset.dismissToast);
+      state.toasts = state.toasts.filter((t) => t.id !== id);
+      renderToasts();
+    });
+  });
+}
+
+/* ====================== حالة التحميل (سبينر الأزرار) ====================== */
+const LOADING_ACTIONS = [
+  'save-patient', 'save-doctor', 'save-service', 'save-expense', 'save-appointment',
+  'save-medical-entry', 'save-patient-notes', 'save-settings',
+  'confirm-delete-patient', 'confirm-delete-doctor', 'confirm-delete-service', 'confirm-delete-expense',
+  'confirm-delete-appt', 'confirm-clear-activity-log', 'confirm-import-backup',
+  'do-login', 'confirm-booking', 'reset-password-via-question',
+  'export-excel', 'export-pdf', 'download-invoice',
+];
+function runWithLoading(el, run) {
+  if (el.dataset.loading === '1') return;
+  const originalHtml = el.innerHTML;
+  el.dataset.loading = '1';
+  el.disabled = true;
+  el.classList.add('is-loading');
+  el.innerHTML = `<span class="btn-spinner"></span><span>جارِ التنفيذ...</span>`;
+  setTimeout(() => {
+    try {
+      run();
+    } finally {
+      // لو الصفحة اتعاد رسمها (render) هيتشال الزرار القديم من الـ DOM أصلاً؛
+      // لو لأي سبب لسه موجود (مفيش render حصل)، نرجّعه لشكله الطبيعي
+      if (document.body.contains(el)) {
+        el.dataset.loading = '0';
+        el.disabled = false;
+        el.classList.remove('is-loading');
+        el.innerHTML = originalHtml;
+      }
+    }
+  }, 480);
+}
+function getServicePrice(serviceName) {
+  const sv = state.services.find((x) => x.name === serviceName);
+  return sv ? sv.price : 0;
+}
+function visitTypeBadgeClass(visitType) {
+  if (visitType === 'مستعجل') return 'visit-urgent';
+  if (visitType === 'متابعة') return 'visit-followup';
+  return 'visit-normal';
+}
+function visitTypeBadge(visitType) {
+  if (!visitType) return '';
+  return `<span class="badge ${visitTypeBadgeClass(visitType)}">${esc(visitType)}</span>`;
+}
+// بيرجع أسماء أيام الأسبوع (بالعربي) اللي الطبيب متاح فيها كنص مختصر، أو "" لو الأيام كلها متاحة
+function getDoctorScheduleLabel(doctor) {
+  if (!doctor) return '';
+  const from = doctor.workingFrom || '09:00';
+  const to = doctor.workingTo || '21:00';
+  const days = (doctor.workingDays && doctor.workingDays.length) ? doctor.workingDays.join('، ') : 'كل الأيام';
+  return `${days} · من ${from} إلى ${to}`;
+}
+function dateISOToArabicDayName(dateISO) {
+  if (!dateISO) return null;
+  const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+  const date = new Date(dateISO + 'T00:00:00');
+  return days[date.getDay()];
+}
+function addDaysISO(iso, days) {
+  const d = new Date(iso + 'T00:00:00');
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+function startOfWeekSaturday(iso) {
+  const d = new Date(iso + 'T00:00:00');
+  const sinceSaturday = (d.getDay() + 1) % 7; // getDay: 0=أحد...6=سبت
+  return addDaysISO(iso, -sinceSaturday);
+}
+function formatArabicDateShort(iso) {
+  const date = new Date(iso + 'T00:00:00');
+  const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+  const months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+  return `${days[date.getDay()]} ${toArabicDigits(date.getDate())} ${months[date.getMonth()]}`;
+}
+function toArabicDigits(str) {
+  const map = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
+  return String(str).replace(/[0-9]/g, (d) => map[d]);
+}
+function formatMoney(n) {
+  const num = Number(n) || 0;
+  return num.toLocaleString('en-US');
+}
+function formatArabicDate(dateValue) {
+  if (!dateValue) return null;
+  const date = new Date(dateValue + 'T00:00:00');
+  const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+  const months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+  return `${days[date.getDay()]} ${toArabicDigits(date.getDate())} ${months[date.getMonth()]}`;
+}
+function formatArabicDateFull(dateValue) {
+  if (!dateValue) return '—';
+  const date = new Date(dateValue + 'T00:00:00');
+  const months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+  return `${toArabicDigits(date.getDate())} ${months[date.getMonth()]} ${toArabicDigits(date.getFullYear())}`;
+}
+function formatArabicTime(timeValue) {
+  if (!timeValue) return null;
+  let [h, m] = timeValue.split(':').map(Number);
+  const period = h >= 12 ? 'م' : 'ص';
+  let h12 = h % 12;
+  if (h12 === 0) h12 = 12;
+  return `${toArabicDigits(h12)}:${toArabicDigits(String(m).padStart(2, '0'))} ${period}`;
+}
+
+/* ====================== تصدير Excel / PDF ====================== */
+// باليت ألوان ثابتة (فاتحة) بنفرضها على أي محتوى بنصدّره كـ PDF
+// عشان الطباعة تطلع واضحة بغض النظر عن الوضع الليلي/النهاري الحالي في الموقع
+const PRINT_PALETTE = {
+  '--bg-0': '#F6F8F7', '--bg-1': '#FFFFFF', '--bg-2': '#EFF3F1', '--bg-3': '#E6ECE9',
+  '--teal': '#2C8F73', '--teal-wash': 'rgba(44,143,115,0.10)',
+  '--amber': '#B8811F', '--amber-wash': 'rgba(184,129,31,0.12)',
+  '--rust': '#B4593B', '--rust-wash': 'rgba(180,89,59,0.12)',
+  '--line': '#E1E7E4', '--line-strong': '#CBD5D1',
+  '--text-0': '#132420', '--text-1': '#3D544D', '--text-2': '#6F857D',
+  '--teal-text': '#1F7A5C', '--amber-text': '#8A5F13', '--rust-text': '#94402A',
+};
+function applyPrintPalette(el) {
+  Object.entries(PRINT_PALETTE).forEach(([k, v]) => el.style.setProperty(k, v));
+}
+
+// تصدير أي جدول (data-table) موجود في الصفحة الحالية إلى ملف إكسل حقيقي
+function exportTableToExcel(tableId, filename) {
+  const container = document.getElementById(tableId);
+  const table = container ? container.querySelector('table') : null;
+  if (!table) { showToast('الجدول غير موجود للتصدير', 'error'); return; }
+  try {
+    const cleanTable = table.cloneNode(true);
+    cleanTable.querySelectorAll('.no-export').forEach((el) => el.remove());
+    const wb = XLSX.utils.table_to_book(cleanTable, { sheet: 'الجدول' });
+    const ws = wb.Sheets['الجدول'];
+    ws['!cols'] = Object.keys(ws)
+      .filter((k) => /^[A-Z]+1$/.test(k))
+      .map(() => ({ wch: 22 }));
+    if (!wb.Workbook) wb.Workbook = {};
+    wb.Workbook.Views = [{ RTL: true }];
+    XLSX.writeFile(wb, `${filename}.xlsx`);
+    showToast('تم تصدير ملف الإكسل بنجاح', 'success');
+  } catch (err) {
+    showToast('حصل خطأ أثناء تصدير الإكسل', 'error');
+  }
+}
+
+// تصدير أي جدول (data-table) إلى ملف PDF (صورة مطبوعة من الجدول، فتدعم العربي بشكل صحيح)
+async function exportTableToPDF(tableId, filename, title) {
+  const container = document.getElementById(tableId);
+  if (!container) { showToast('الجدول غير موجود للتصدير', 'error'); return; }
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText = `position:fixed;top:-99999px;left:-99999px;width:${Math.max(container.offsetWidth, 500) + 48}px;padding:24px;direction:rtl;font-family:'IBM Plex Sans Arabic',Tahoma,sans-serif;`;
+  applyPrintPalette(wrapper);
+  wrapper.style.background = 'var(--bg-1)';
+  const heading = document.createElement('div');
+  heading.style.cssText = 'margin-bottom:4px;color:var(--text-0);font-size:18px;font-weight:700;';
+  heading.textContent = title || '';
+  const dateLine = document.createElement('div');
+  dateLine.style.cssText = 'margin-bottom:16px;color:var(--text-2);font-size:12px;';
+  dateLine.textContent = `اسم العيادة: ${state.settings.clinicName} — تاريخ التصدير: ${new Date().toLocaleDateString('ar-EG')}`;
+  const clone = container.cloneNode(true);
+  clone.style.overflow = 'visible';
+  clone.querySelectorAll('.no-export').forEach((el) => el.remove());
+  wrapper.appendChild(heading);
+  wrapper.appendChild(dateLine);
+  wrapper.appendChild(clone);
+  document.body.appendChild(wrapper);
+  try {
+    const canvas = await html2canvas(wrapper, { scale: 2, backgroundColor: '#ffffff' });
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const margin = 10;
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const imgWidth = pageWidth - margin * 2;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    const imgData = canvas.toDataURL('image/png');
+    let heightLeft = imgHeight;
+    let position = margin;
+    pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+    heightLeft -= (pageHeight - margin * 2);
+    while (heightLeft > 0) {
+      position = margin - (imgHeight - heightLeft);
+      pdf.addPage();
+      pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+      heightLeft -= (pageHeight - margin * 2);
+    }
+    pdf.save(`${filename}.pdf`);
+    showToast('تم تصدير ملف PDF بنجاح', 'success');
+  } catch (err) {
+    showToast('حصل خطأ أثناء تصدير PDF', 'error');
+  } finally {
+    wrapper.remove();
+  }
+}
+
+// تحميل فاتورة PDF منسّقة لموعد واحد بالتحديد
+async function downloadInvoicePDF(apptId) {
+  const a = state.appointments.find((x) => x.id === apptId);
+  if (!a) return;
+  const price = getServicePrice(a.service);
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText = 'position:fixed;top:-99999px;left:-99999px;width:420px;padding:32px;direction:rtl;font-family:\'IBM Plex Sans Arabic\',Tahoma,sans-serif;border-radius:14px;';
+  applyPrintPalette(wrapper);
+  wrapper.style.background = 'var(--bg-1)';
+  wrapper.style.color = 'var(--text-0)';
+  wrapper.style.border = '1px solid var(--line)';
+  wrapper.innerHTML = `
+    <div style="text-align:center;margin-bottom:20px;">
+      <div style="font-size:18px;font-weight:700;">${esc(state.settings.clinicName)}</div>
+      <div style="font-size:12px;color:var(--text-2);margin-top:4px;">فاتورة رقم #${a.id}</div>
+    </div>
+    <div style="border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:16px 0;margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;"><span style="color:var(--text-2);">اسم المريض</span><span style="font-weight:600;">${esc(a.patientName)}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;"><span style="color:var(--text-2);">رقم الموبايل</span><span style="font-weight:600;">${esc(a.patientPhone || '—')}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;"><span style="color:var(--text-2);">الطبيب</span><span style="font-weight:600;">${esc(getDoctorName(a.doctorId))}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;"><span style="color:var(--text-2);">الخدمة</span><span style="font-weight:600;">${esc(a.service)}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;"><span style="color:var(--text-2);">الموعد</span><span style="font-weight:600;">${esc(a.date)} — ${esc(a.time)}</span></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;">
+      <span style="font-size:14px;color:var(--text-2);">الإجمالي</span>
+      <span style="font-size:20px;font-weight:700;color:var(--teal);">${formatMoney(price)} جنيه</span>
+    </div>
+    <div style="text-align:center;margin-top:14px;">
+      <span style="display:inline-block;padding:5px 14px;border-radius:999px;font-size:12px;font-weight:600;background:${a.paid ? 'var(--teal-wash)' : 'var(--amber-wash)'};color:${a.paid ? 'var(--teal-text)' : 'var(--amber-text)'};">${a.paid ? 'مدفوع' : 'معلّق'}</span>
+    </div>
+    <div style="text-align:center;margin-top:20px;font-size:11px;color:var(--text-2);">تم الإصدار بتاريخ ${new Date().toLocaleDateString('ar-EG')}</div>
+  `;
+  document.body.appendChild(wrapper);
+  try {
+    const canvas = await html2canvas(wrapper, { scale: 3, backgroundColor: '#ffffff' });
+    const { jsPDF } = window.jspdf;
+    const imgData = canvas.toDataURL('image/png');
+    const pdfWidth = 100;
+    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+    const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: [pdfWidth + 10, pdfHeight + 10] });
+    pdf.addImage(imgData, 'PNG', 5, 5, pdfWidth, pdfHeight);
+    pdf.save(`فاتورة-${a.patientName}-${a.id}.pdf`);
+    showToast('تم تحميل الفاتورة بنجاح', 'success');
+  } catch (err) {
+    showToast('حصل خطأ أثناء تجهيز الفاتورة', 'error');
+  } finally {
+    wrapper.remove();
+  }
+}
+
+/* ====================== رسم بياني بسيط (Bar Chart) ====================== */
+function renderBarChart(data, opts) {
+  // data: [{ label, value, color? }]
+  const options = opts || {};
+  const max = Math.max(1, ...data.map((d) => d.value));
+  if (data.length === 0) {
+    return `<div class="empty-hint">مفيش بيانات كفاية لعرض الرسم البياني</div>`;
+  }
+  return `
+    <div class="bar-chart">
+      ${data.map((d) => {
+        const pct = Math.max(d.value > 0 ? 4 : 0, Math.round((d.value / max) * 100));
+        const color = d.color || 'var(--teal)';
+        return `
+        <div class="bar-chart-row">
+          <div class="bar-chart-label" title="${esc(d.label)}">${esc(d.label)}</div>
+          <div class="bar-chart-track">
+            <div class="bar-chart-fill" style="width:${pct}%;background:${color};"></div>
+          </div>
+          <div class="bar-chart-value">${esc(String(d.value))}${options.unit ? ` ${options.unit}` : ''}</div>
+        </div>
+      `;
+      }).join('')}
+    </div>
+  `;
+}
+
+/* ====================== رسم دائري (Donut) ====================== */
+function renderDonutChart(data, opts) {
+  // data: [{ label, value, color? }]
+  const options = opts || {};
+  const total = data.reduce((sum, d) => sum + d.value, 0);
+  if (total === 0) {
+    return `<div class="empty-hint">مفيش بيانات كفاية لعرض الرسم البياني</div>`;
+  }
+  const size = 176;
+  const stroke = 26;
+  const r = (size - stroke) / 2;
+  const cx = size / 2;
+  const cy = size / 2;
+  const circumference = 2 * Math.PI * r;
+
+  let acc = 0;
+  const segments = data.filter((d) => d.value > 0).map((d) => {
+    const dash = (d.value / total) * circumference;
+    const svg = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${d.color || 'var(--teal)'}" stroke-width="${stroke}" stroke-dasharray="${dash} ${circumference - dash}" stroke-dashoffset="${-acc}" />`;
+    acc += dash;
+    return svg;
+  }).join('');
+
+  const legend = data.map((d) => {
+    const pct = Math.round((d.value / total) * 100);
+    return `
+      <div class="donut-legend-item">
+        <span class="donut-legend-dot" style="background:${d.color || 'var(--teal)'};"></span>
+        <span class="donut-legend-label">${esc(d.label)}</span>
+        <span class="donut-legend-value">${esc(String(d.value))}${options.unit ? ` ${options.unit}` : ''} &middot; ${pct}٪</span>
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <div class="donut-chart-container">
+      <div class="donut-chart-wrap">
+        <svg viewBox="0 0 ${size} ${size}" class="donut-chart-svg" style="transform:rotate(-90deg);">
+          <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--bg-2)" stroke-width="${stroke}" />
+          ${segments}
+        </svg>
+        <div class="donut-chart-center">
+          <div class="donut-chart-total">${total}</div>
+          <div class="donut-chart-total-label">إجمالي</div>
+        </div>
+      </div>
+      <div class="donut-legend">${legend}</div>
+    </div>
+  `;
+}
+
+/* ====================== أعمدة عمودية (Vertical Bars) ====================== */
+function renderVerticalBarChart(data, opts) {
+  // data: [{ label, value, color? }]
+  const options = opts || {};
+  if (data.length === 0) {
+    return `<div class="empty-hint">مفيش بيانات كفاية لعرض الرسم البياني</div>`;
+  }
+  const max = Math.max(1, ...data.map((d) => d.value));
+  return `
+    <div class="vbar-chart">
+      ${data.map((d) => {
+        const pct = Math.max(d.value > 0 ? 4 : 0, Math.round((d.value / max) * 100));
+        const color = d.color || 'var(--teal)';
+        return `
+          <div class="vbar-col">
+            <div class="vbar-value">${esc(String(d.value))}${options.unit ? ` ${options.unit}` : ''}</div>
+            <div class="vbar-track">
+              <div class="vbar-fill" style="height:${pct}%;background:${color};"></div>
+            </div>
+            <div class="vbar-label" title="${esc(d.label)}">${esc(d.label)}</div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+/* ====================== أدوات مساعدة للـ DOM ====================== */
+function esc(str) {
+  const div = document.createElement('div');
+  div.textContent = String(str);
+  return div.innerHTML;
+}
+
+function eyeIcon(visible) {
+  return visible
+    ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`
+    : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 5.2C11.05 5.07 11.52 5 12 5c6.4 0 10 7 10 7-.6 1.1-1.5 2.4-2.7 3.6M6.6 6.6C4.3 8.1 2.7 10.3 2 12c0 0 3.6 7 10 7 1.6 0 3-.4 4.2-1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>`;
+}
+
+const navIcons = {
+  'dashboard': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 3h6v3H9z"/><path d="M9 11.5h6M9 15.5h4"/></svg>`,
+  'calendar': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="16" rx="2"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>`,
+  'patients': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1.2-4 4-6 7-6s5.8 2 7 6"/></svg>`,
+  'doctors': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v6a3.5 3.5 0 0 0 7 0V3"/><path d="M9.5 13.5V15a5.5 5.5 0 0 0 11 0v-1.2"/><circle cx="20.2" cy="12.3" r="1.5"/></svg>`,
+  'billing': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2V2z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>`,
+  'expenses': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><circle cx="16" cy="14" r="1.4"/></svg>`,
+  'reports': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>`,
+  'backup': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18a4.5 4.5 0 0 1-.6-8.96A5.5 5.5 0 0 1 17.3 8.2 4 4 0 0 1 17 18H7Z"/><path d="M12 11v6M9.5 14.5 12 17l2.5-2.5"/></svg>`,
+  'activity-log': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>`,
+  'settings': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l1.9-1.4-2-3.4-2.2.7a7.6 7.6 0 0 0-2.6-1.5L14 2.5h-4l-.5 2.4a7.6 7.6 0 0 0-2.6 1.5l-2.2-.7-2 3.4L4.6 10.5a7.6 7.6 0 0 0 0 3L2.7 15l2 3.4 2.2-.7a7.6 7.6 0 0 0 2.6 1.5l.5 2.4h4l.5-2.4a7.6 7.6 0 0 0 2.6-1.5l2.2.7 2-3.4-1.9-1.4Z"/></svg>`,
+};
+
+/* ====================== زر تبديل الوضع الليلي/النهاري ====================== */
+function themeToggleButton(extraClass) {
+  const isLight = state.theme === 'light';
+  const icon = isLight
+    ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>`
+    : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2M12 19.5v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M2.5 12h2M19.5 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg>`;
+  return `<button type="button" class="theme-toggle ${extraClass || ''}" data-action="toggle-theme" title="${isLight ? 'الوضع الداكن' : 'الوضع الفاتح'}" aria-label="تبديل الوضع الداكن/الفاتح">${icon}</button>`;
+}
+
+/* ====================== هيكل تحميل مؤقت (Skeleton) ====================== */
+function renderSkeleton() {
+  return `
+    <div class="main">
+      <div class="topbar">
+        <div>
+          <div class="skeleton skeleton-bar" style="width:150px;height:20px;"></div>
+          <div class="skeleton skeleton-bar" style="width:220px;height:12px;margin-top:8px;"></div>
+        </div>
+      </div>
+      <div class="skeleton-stats">
+        <div class="skeleton skeleton-stat"></div>
+        <div class="skeleton skeleton-stat"></div>
+        <div class="skeleton skeleton-stat"></div>
+      </div>
+      <div class="skeleton-card">
+        ${Array.from({ length: 5 }).map(() => `
+          <div class="skeleton-row">
+            <div class="skeleton"></div>
+            <div class="skeleton" style="max-width:160px;"></div>
+            <div class="skeleton" style="max-width:90px;"></div>
+            <div class="skeleton" style="max-width:70px;"></div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+/* ====================== الترويسة العلوية ====================== */
+function topNav(showSidebarToggle) {
+  const s = state.settings;
+  const logoHtml = s.logo
+    ? `<img src="${s.logo}" alt="" style="width:30px;height:30px;border-radius:8px;object-fit:cover;">`
+    : `<div class="brand-mark">${esc(initials(s.clinicName))}</div>`;
+  const hamburger = showSidebarToggle
+    ? `<button type="button" class="hamburger-btn" data-action="toggle-sidebar" aria-label="فتح القائمة">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>`
+    : '';
+  return `
+    <div class="topnav">
+      <div class="brand">
+        ${hamburger}
+        ${logoHtml}
+        <span class="brand-name">${esc(s.clinicName)}</span>
+      </div>
+      <div class="topnav-actions">
+        <div class="nav-tabs">
+          <a class="${state.currentPage !== 'booking' ? 'active' : ''}" data-page="dashboard">لوحة التحكم</a>
+          <a class="${state.currentPage === 'booking' ? 'active' : ''}" data-page="booking">حجز موعد</a>
+          ${state.auth.loggedIn ? `<a class="logout-link" data-action="logout">تسجيل خروج</a>` : ''}
+        </div>
+        ${themeToggleButton()}
+      </div>
+    </div>
+  `;
+}
+
+/* ====================== لوحة التحكم (مع السايدبار) ====================== */
+function sidebar() {
+  const groups = [
+    { label: 'العمليات اليومية', items: [
+      { key: 'dashboard', label: 'المواعيد' },
+      { key: 'calendar', label: 'التقويم' },
+      { key: 'patients', label: 'المرضى' },
+      { key: 'doctors', label: 'الأطباء' },
+    ] },
+    { label: 'الماليات', items: [
+      { key: 'billing', label: 'الفواتير' },
+      { key: 'expenses', label: 'الرواتب والمصروفات' },
+      { key: 'reports', label: 'التقارير' },
+    ] },
+    { label: 'النظام', items: [
+      { key: 'backup', label: 'نسخة احتياطية' },
+      { key: 'activity-log', label: 'سجل النشاط' },
+      { key: 'settings', label: 'الإعدادات' },
+    ] },
+  ];
+
+  const groupsHtml = groups.map((group) => {
+    const items = group.items.filter((it) => isPageAllowed(it.key));
+    if (items.length === 0) return '';
+    return `
+      <div class="nav-group-label">${group.label}</div>
+      ${items.map((it) => {
+        const isActive = state.currentPage === it.key || (it.key === 'patients' && state.currentPage === 'patient-detail');
+        return `
+        <button class="nav-item ${isActive ? 'active' : ''}" data-page="${it.key}">
+          <span class="nav-icon">${navIcons[it.key] || ''}</span>
+          <span>${it.label}</span>
+        </button>
+      `;
+      }).join('')}
+    `;
+  }).join('');
+
+  return `
+    <div class="sidebar ${state.sidebarOpen ? 'open' : ''}">
+      <div class="sidebar-mobile-head">
+        <span>القائمة</span>
+        <button type="button" class="sidebar-close-btn" data-action="close-sidebar" aria-label="إغلاق القائمة">✕</button>
+      </div>
+      ${!isAdmin() ? `<div class="role-hint">صلاحيات محدودة: حجز مواعيد، مرضى، ورواتب/مصروفات فقط</div>` : ''}
+      ${groupsHtml}
+    </div>
+    <div class="sidebar-backdrop ${state.sidebarOpen ? 'show' : ''}" data-action="close-sidebar"></div>
+  `;
+}
+
+function renderDashboard() {
+  const confirmed = state.appointments.filter((a) => a.status === 'confirmed').length;
+  const pending = state.appointments.filter((a) => a.status === 'pending').length;
+  const total = state.appointments.length || 1;
+  const rate = Math.round((confirmed / total) * 100);
+  const statusLabel = { confirmed: 'مؤكد', pending: 'في الانتظار', cancelled: 'ملغي' };
+
+  const q = state.apptQuery;
+  const statusFilter = state.apptStatusFilter;
+  const dateFilter = state.apptDateFilter;
+  const filtered = state.appointments.filter((a) => {
+    const matchesQuery = a.patientName.includes(q) || getDoctorName(a.doctorId).includes(q) || a.service.includes(q);
+    const matchesStatus = statusFilter === 'all' || a.status === statusFilter;
+    const matchesDate = dateFilter === 'all'
+      || (dateFilter === 'today' && a.dateISO === TODAY_ISO)
+      || (dateFilter === 'upcoming' && a.dateISO && a.dateISO >= TODAY_ISO)
+      || (dateFilter === 'past' && a.dateISO && a.dateISO < TODAY_ISO);
+    return matchesQuery && matchesStatus && matchesDate;
+  });
+
+  return `
+    <div class="main">
+      <div class="topbar">
+        <div>
+          <h1>مواعيد اليوم</h1>
+          <p class="subtitle">الأحد، ٦ سبتمبر ٢٠٢٦</p>
+        </div>
+        <button class="btn-primary" data-action="open-appointment-modal">+ حجز موعد جديد</button>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="label">إجمالي المواعيد</div><div class="value">${state.appointments.length}</div></div>
+        <div class="stat"><div class="label">في الانتظار</div><div class="value amber">${pending}</div></div>
+        <div class="stat"><div class="label">نسبة التأكيد</div><div class="value">${rate}٪</div></div>
+      </div>
+
+      <div class="list-toolbar">
+        <div class="search-bar">
+          <input type="text" id="apptSearch" placeholder="ابحث باسم المريض أو الطبيب أو الخدمة" value="${esc(q)}">
+        </div>
+        <select id="apptStatusFilter" class="filter-select">
+          <option value="all" ${statusFilter === 'all' ? 'selected' : ''}>كل الحالات</option>
+          <option value="confirmed" ${statusFilter === 'confirmed' ? 'selected' : ''}>مؤكد</option>
+          <option value="pending" ${statusFilter === 'pending' ? 'selected' : ''}>في الانتظار</option>
+          <option value="cancelled" ${statusFilter === 'cancelled' ? 'selected' : ''}>ملغي</option>
+        </select>
+        <select id="apptDateFilter" class="filter-select">
+          <option value="all" ${dateFilter === 'all' ? 'selected' : ''}>كل التواريخ</option>
+          <option value="today" ${dateFilter === 'today' ? 'selected' : ''}>اليوم فقط</option>
+          <option value="upcoming" ${dateFilter === 'upcoming' ? 'selected' : ''}>القادمة</option>
+          <option value="past" ${dateFilter === 'past' ? 'selected' : ''}>السابقة</option>
+        </select>
+      </div>
+
+      <div class="table-card">
+        <table class="data-table">
+          <thead>
+            <tr><th>المريض</th><th>الطبيب</th><th>الخدمة</th><th>نوع الكشف</th><th>الموعد</th><th>الحالة</th><th></th></tr>
+          </thead>
+          <tbody>
+            ${filtered.length === 0 ? `<tr><td colspan="7" class="empty-hint">مفيش مواعيد مطابقة للبحث أو الفلاتر المختارة</td></tr>` :
+              filtered.map((a) => `
+                <tr>
+                  <td>${esc(a.patientName)}</td>
+                  <td>${esc(getDoctorName(a.doctorId))}</td>
+                  <td>${esc(a.service)}</td>
+                  <td>${visitTypeBadge(a.visitType)}</td>
+                  <td>${esc(a.date)} — ${esc(a.time)}</td>
+                  <td><span class="badge ${a.status}">${statusLabel[a.status]}</span></td>
+                  <td>
+                    <div class="row-actions">
+                      <button class="icon-btn whatsapp-reminder" data-action="whatsapp-appt-reminder" data-id="${a.id}">💬 تذكير بالموعد (واتساب)</button>
+                      ${a.status !== 'confirmed' ? `<button class="icon-btn confirm" data-action="confirm-appt" data-id="${a.id}">تأكيد</button>` : ''}
+                      ${a.status !== 'cancelled' ? `<button class="icon-btn danger" data-action="cancel-appt" data-id="${a.id}">إلغاء</button>` : ''}
+                      ${isAdmin() ? `<button class="icon-btn" data-action="delete-appt" data-id="${a.id}">حذف</button>` : ''}
+                    </div>
+                  </td>
+                </tr>
+              `).join('')
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+function renderPatients() {
+  const q = state.patientQuery;
+  const statusFilter = state.patientStatusFilter;
+  const filtered = state.patients.filter((p) => {
+    const matchesQuery = p.name.includes(q) || p.phone.includes(q);
+    const matchesStatus = statusFilter === 'all' || p.status === statusFilter;
+    return matchesQuery && matchesStatus;
+  });
+  const admin = isAdmin();
+
+  return `
+    <div class="main">
+      <div class="topbar">
+        <div>
+          <h1>المرضى</h1>
+          <p class="subtitle">${state.patients.length} مريض مسجل في العيادة</p>
+        </div>
+        <div class="row-actions">
+          <button class="icon-btn" data-action="export-excel" data-target="patientsTable" data-filename="مرضى-${esc(state.settings.clinicName)}">⬇️ Excel</button>
+          <button class="icon-btn" data-action="export-pdf" data-target="patientsTable" data-filename="مرضى-${esc(state.settings.clinicName)}" data-title="قائمة المرضى">⬇️ PDF</button>
+          <button class="btn-primary" data-action="open-patient-modal">+ إضافة مريض</button>
+        </div>
+      </div>
+
+      <div class="list-toolbar">
+        <div class="search-bar">
+          <input type="text" id="patientSearch" placeholder="ابحث بالاسم أو رقم الموبايل" value="${esc(q)}">
+        </div>
+        <select id="patientStatusFilter" class="filter-select">
+          <option value="all" ${statusFilter === 'all' ? 'selected' : ''}>كل الحالات</option>
+          <option value="active" ${statusFilter === 'active' ? 'selected' : ''}>نشط</option>
+          <option value="inactive" ${statusFilter === 'inactive' ? 'selected' : ''}>غير نشط</option>
+        </select>
+      </div>
+
+      <div class="table-card" id="patientsTable">
+        <table class="data-table">
+          <thead>
+            <tr><th>المريض</th><th>رقم الموبايل</th><th>عدد الزيارات</th><th>آخر زيارة</th><th>الحالة</th><th class="no-export"></th></tr>
+          </thead>
+          <tbody>
+            ${filtered.length === 0 ? `<tr><td colspan="6" class="empty-hint">مفيش مرضى مطابقين للبحث أو الفلتر المختار</td></tr>` :
+              filtered.map((p) => `
+                <tr>
+                  <td>${admin
+                    ? `<button class="name-cell link-cell" data-action="view-patient" data-id="${p.id}"><span class="avatar-sm no-export">${esc(p.initials)}</span>${esc(p.name)}</button>`
+                    : `<div class="name-cell"><span class="avatar-sm no-export">${esc(p.initials)}</span>${esc(p.name)}</div>`}</td>
+                  <td>${esc(p.phone)}</td>
+                  <td>${p.visits}</td>
+                  <td>${esc(p.lastVisit)}</td>
+                  <td><span class="badge ${p.status}">${p.status === 'active' ? 'نشط' : 'غير نشط'}</span></td>
+                  <td class="no-export">
+                    <div class="row-actions">
+                      <button class="icon-btn whatsapp-general" data-action="whatsapp-patient" data-id="${p.id}">💬 تواصل عام (واتساب)</button>
+                      ${admin ? `<button class="icon-btn" data-action="open-patient-modal" data-id="${p.id}">تعديل</button>` : ''}
+                      ${admin ? `<button class="icon-btn danger" data-action="delete-patient" data-id="${p.id}">حذف</button>` : ''}
+                    </div>
+                  </td>
+                </tr>
+              `).join('')
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+function renderPatientDetail() {
+  const p = state.patients.find((x) => x.id === state.selectedPatientId);
+  if (!p) {
+    return `
+      <div class="main">
+        <p class="empty-hint">المريض غير موجود</p>
+        <button class="btn-primary" data-action="back-to-patients">رجوع لقائمة المرضى</button>
+      </div>
+    `;
+  }
+  const statusLabel = { confirmed: 'مؤكد', pending: 'في الانتظار', cancelled: 'ملغي' };
+  const patientAppointments = state.appointments.filter((a) => a.patientName === p.name);
+
+  return `
+    <div class="main">
+      <button class="icon-btn" data-action="back-to-patients" style="margin-bottom:18px;">→ رجوع لقائمة المرضى</button>
+
+      <div class="patient-profile-header">
+        <div class="avatar" style="width:56px;height:56px;font-size:18px;">${esc(p.initials)}</div>
+        <div style="flex:1;min-width:180px;">
+          <h1 style="margin:0 0 4px;font-size:20px;">${esc(p.name)}</h1>
+          <p style="margin:0;color:var(--text-2);font-size:13px;">${esc(p.phone)} &middot; <span class="badge ${p.status}">${p.status === 'active' ? 'نشط' : 'غير نشط'}</span></p>
+        </div>
+        <button class="icon-btn whatsapp-general" data-action="whatsapp-patient" data-id="${p.id}">💬 تواصل عام (واتساب)</button>
+        <button class="icon-btn" data-action="open-patient-modal" data-id="${p.id}">تعديل البيانات</button>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="label">عدد الزيارات</div><div class="value">${p.visits}</div></div>
+        <div class="stat"><div class="label">آخر زيارة</div><div class="value" style="font-size:16px;">${esc(p.lastVisit)}</div></div>
+        <div class="stat"><div class="label">الحساسية</div><div class="value" style="font-size:14px;color:var(--text-0);">${p.allergies ? esc(p.allergies) : '—'}</div></div>
+      </div>
+
+      <div class="settings-section">
+        <h2>الحالة المزمنة / ملاحظات عامة</h2>
+        <div class="form-group">
+          <textarea id="patientConditionsInput" rows="2" placeholder="مثال: ضغط الدم، سكري...">${esc(p.chronicConditions || '')}</textarea>
+        </div>
+        <div class="form-group">
+          <label>الحساسية</label>
+          <input type="text" id="patientAllergiesInput" value="${esc(p.allergies || '')}" placeholder="مثال: حساسية من البنسلين">
+        </div>
+        <button class="icon-btn confirm" data-action="save-patient-notes" data-id="${p.id}">حفظ الملاحظات</button>
+      </div>
+
+      <div class="settings-section">
+        <div class="topbar" style="margin-bottom:14px;">
+          <h2 style="margin:0;">التاريخ الطبي</h2>
+          <button class="btn-primary" data-action="open-medical-modal" data-id="${p.id}">+ إضافة تسجيلة طبية</button>
+        </div>
+        ${p.medicalHistory.length === 0 ? `<p class="empty-hint">لا يوجد تاريخ طبي مسجل بعد</p>` :
+          `<div class="timeline">
+            ${p.medicalHistory.slice().reverse().map((m) => `
+              <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                  <div class="timeline-head">
+                    <span class="timeline-title">${esc(m.title)}</span>
+                    <span class="timeline-date">${esc(m.date)}</span>
+                  </div>
+                  <p class="timeline-note">${esc(m.note)}</p>
+                  <button class="icon-btn danger" data-action="delete-medical-entry" data-id="${m.id}" data-patient="${p.id}">حذف</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>`
+        }
+      </div>
+
+      <div class="settings-section">
+        <h2>الزيارات السابقة</h2>
+        <div class="table-card">
+          <table class="data-table">
+            <thead><tr><th>الطبيب</th><th>الخدمة</th><th>نوع الكشف</th><th>الموعد</th><th>الحالة</th></tr></thead>
+            <tbody>
+              ${patientAppointments.length === 0 ? `<tr><td colspan="5" class="empty-hint">لا يوجد زيارات مسجلة لهذا المريض</td></tr>` :
+                patientAppointments.map((a) => `
+                  <tr>
+                    <td>${esc(getDoctorName(a.doctorId))}</td>
+                    <td>${esc(a.service)}</td>
+                    <td>${visitTypeBadge(a.visitType)}</td>
+                    <td>${esc(a.date)} — ${esc(a.time)}</td>
+                    <td><span class="badge ${a.status}">${statusLabel[a.status]}</span></td>
+                  </tr>
+                `).join('')
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderDoctors() {
+  const q = state.doctorQuery;
+  const statusFilter = state.doctorStatusFilter;
+  const filtered = state.doctors.filter((d) => {
+    const matchesQuery = d.name.includes(q) || d.specialty.includes(q);
+    const matchesStatus = statusFilter === 'all' || d.status === statusFilter;
+    return matchesQuery && matchesStatus;
+  });
+
+  return `
+    <div class="main">
+      <div class="topbar">
+        <div>
+          <h1>الأطباء</h1>
+          <p class="subtitle">${state.doctors.length} أطباء في العيادة</p>
+        </div>
+        <div class="row-actions">
+          <button class="icon-btn" data-action="export-excel" data-target="doctorsTable" data-filename="أطباء-${esc(state.settings.clinicName)}">⬇️ Excel</button>
+          <button class="icon-btn" data-action="export-pdf" data-target="doctorsTable" data-filename="أطباء-${esc(state.settings.clinicName)}" data-title="قائمة الأطباء">⬇️ PDF</button>
+          <button class="btn-primary" data-action="open-doctor-modal">+ إضافة طبيب</button>
+        </div>
+      </div>
+
+      <div class="list-toolbar">
+        <div class="search-bar">
+          <input type="text" id="doctorSearch" placeholder="ابحث بالاسم أو التخصص" value="${esc(q)}">
+        </div>
+        <select id="doctorStatusFilter" class="filter-select">
+          <option value="all" ${statusFilter === 'all' ? 'selected' : ''}>كل الحالات</option>
+          <option value="active" ${statusFilter === 'active' ? 'selected' : ''}>متاح</option>
+          <option value="inactive" ${statusFilter === 'inactive' ? 'selected' : ''}>غير متاح</option>
+        </select>
+      </div>
+
+      <div class="table-card" id="doctorsTable">
+        <table class="data-table">
+          <thead>
+            <tr><th>الطبيب</th><th>رقم الموبايل</th><th>التخصص</th><th>مواعيد العمل</th><th>الحالة</th><th class="no-export"></th></tr>
+          </thead>
+          <tbody>
+            ${filtered.length === 0 ? `<tr><td colspan="6" class="empty-hint">مفيش أطباء مطابقين للبحث أو الفلتر المختار</td></tr>` :
+              filtered.map((d) => `
+                <tr>
+                  <td><div class="name-cell"><span class="avatar-sm no-export">${esc(d.initials)}</span>${esc(d.name)}</div></td>
+                  <td>${esc(d.phone || '—')}</td>
+                  <td>${esc(d.specialty)}</td>
+                  <td style="font-size:12px;color:var(--text-2);">${esc(getDoctorScheduleLabel(d))}</td>
+                  <td><span class="badge ${d.status}">${d.status === 'active' ? 'متاح' : 'غير متاح'}</span></td>
+                  <td class="no-export">
+                    <div class="row-actions">
+                      ${d.phone ? `<button class="icon-btn confirm" data-action="whatsapp-doctor" data-id="${d.id}">💬 واتساب</button>` : ''}
+                      <button class="icon-btn" data-action="open-doctor-modal" data-id="${d.id}">تعديل</button>
+                      <button class="icon-btn danger" data-action="delete-doctor" data-id="${d.id}">حذف</button>
+                    </div>
+                  </td>
+                </tr>
+              `).join('')
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+/* ====================== صفحة الإعدادات ====================== */
+const allDays = ['السبت', 'الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
+const securityQuestions = [
+  'ما اسم أول مدرسة التحقت بها؟',
+  'ما اسم والدتك قبل الزواج؟',
+  'ما هي مدينة ميلادك؟',
+  'ما اسم أول حيوان أليف امتلكته؟',
+  'ما هو لقبك المفضل في الصغر؟',
+];
+
+function renderSettings() {
+  const s = state.settings;
+  const logoHtml = s.logo
+    ? `<img src="${s.logo}" alt="">`
+    : `<span style="font-size:22px;opacity:.6;">📷</span>`;
+
+  return `
+    <div class="main">
+      <div class="topbar">
+        <div>
+          <h1>الإعدادات</h1>
+          <p class="subtitle">بيانات العيادة وأوقات العمل والخدمات</p>
+        </div>
+      </div>
+
+      ${state.settingsNotice ? `
+        <div class="notice-banner ${state.settingsNotice.type}">
+          <span>${esc(state.settingsNotice.text)}</span>
+          <button type="button" data-action="dismiss-settings-notice" aria-label="إغلاق">✕</button>
+        </div>
+      ` : ''}
+
+      <div class="settings-section">
+        <h2>بيانات العيادة</h2>
+        <div class="logo-row" style="margin-bottom:18px;">
+          <div class="logo-preview">${logoHtml}</div>
+          <label class="file-btn">
+            رفع لوجو جديد
+            <input type="file" id="logoUpload" accept="image/*">
+          </label>
+        </div>
+        <div class="form-group">
+          <label>اسم العيادة</label>
+          <input type="text" id="clinicNameInput" value="${esc(s.clinicName)}">
+        </div>
+        <div class="form-group">
+          <label>كلمة سر لوحة التحكم الحالية</label>
+          <div class="password-wrapper">
+            <input type="password" id="clinicPasswordCurrent" value="${esc(s.password)}">
+            <button type="button" class="password-toggle" data-action="toggle-password" data-target="clinicPasswordCurrent" aria-label="إظهار/إخفاء كلمة السر">${eyeIcon(false)}</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>كلمة سر جديدة</label>
+          <div class="password-wrapper">
+            <input type="password" id="clinicPasswordNew" placeholder="اتركها فاضية لو مش عايز تغيّر كلمة السر">
+            <button type="button" class="password-toggle" data-action="toggle-password" data-target="clinicPasswordNew" aria-label="إظهار/إخفاء كلمة السر">${eyeIcon(false)}</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>تأكيد كلمة السر الجديدة</label>
+          <div class="password-wrapper">
+            <input type="password" id="clinicPasswordConfirm" placeholder="أعد كتابة كلمة السر الجديدة">
+            <button type="button" class="password-toggle" data-action="toggle-password" data-target="clinicPasswordConfirm" aria-label="إظهار/إخفاء كلمة السر">${eyeIcon(false)}</button>
+          </div>
+          <p style="font-size:11.5px;color:var(--text-2);margin:6px 0 0;">هتحتاج كلمة السر دي عشان تدخل لوحة التحكم تاني بعد تسجيل الخروج.</p>
+        </div>
+        <div class="form-group">
+          <label>سؤال الأمان (لاسترجاع كلمة السر لو نسيتها)</label>
+          <select id="securityQuestionSelect" class="select-field">
+            ${securityQuestions.map((q) => `<option value="${esc(q)}" ${s.securityQuestion === q ? 'selected' : ''}>${esc(q)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>إجابة سؤال الأمان</label>
+          <input type="text" id="securityAnswerInput" value="${esc(s.securityAnswer)}" placeholder="اكتب الإجابة اللي هتفتكرها">
+          <p style="font-size:11.5px;color:var(--text-2);margin:6px 0 0;">هتحتاج الإجابة دي لو نسيت كلمة السر وعايز ترجّعها من صفحة الدخول.</p>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h2>كلمة سر الموظف (صلاحيات محدودة)</h2>
+        <p class="section-label" style="margin-bottom:14px;">أي حد يدخل بكلمة السر دي هيقدر يحجز/يأكد/يلغي المواعيد، يشوف التقويم، يضيف مرضى جدد، ويضيف رواتب ومصروفات ويسجّلها كمدفوعة — من غير ما يقدر يعدّل أو يحذف أي بيانات، أو يوصل للإعدادات أو الأطباء أو الفواتير أو التقارير أو النسخة الاحتياطية.</p>
+        <div class="form-group">
+          <label>كلمة سر الموظف</label>
+          <div class="password-wrapper">
+            <input type="password" id="clinicStaffPassword" value="${esc(s.staffPassword)}">
+            <button type="button" class="password-toggle" data-action="toggle-password" data-target="clinicStaffPassword" aria-label="إظهار/إخفاء كلمة السر">${eyeIcon(false)}</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h2>أوقات العمل</h2>
+        <p class="section-label">أيام العمل</p>
+        <div class="days-grid">
+          ${allDays.map((day) => `
+            <button class="day-toggle ${s.workingDays.includes(day) ? 'on' : ''}" data-action="toggle-day" data-day="${day}">${day}</button>
+          `).join('')}
+        </div>
+        <div class="hours-row">
+          <div class="form-group">
+            <label>من الساعة</label>
+            <input type="time" id="workingFrom" value="${s.workingFrom}">
+          </div>
+          <div class="form-group">
+            <label>إلى الساعة</label>
+            <input type="time" id="workingTo" value="${s.workingTo}">
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="topbar" style="margin-bottom:16px;">
+          <h2 style="margin:0;">الخدمات والأسعار</h2>
+          <button class="btn-primary" data-action="open-service-modal">+ إضافة خدمة</button>
+        </div>
+        <div class="table-card">
+          <table class="data-table">
+            <thead><tr><th>الخدمة</th><th>السعر</th><th></th></tr></thead>
+            <tbody>
+              ${state.services.length === 0 ? `<tr><td colspan="3" class="empty-hint">مفيش خدمات مضافة</td></tr>` :
+                state.services.map((sv) => `
+                  <tr>
+                    <td>${esc(sv.name)}</td>
+                    <td class="price-cell">${formatMoney(sv.price)} جنيه</td>
+                    <td>
+                      <div class="row-actions">
+                        <button class="icon-btn" data-action="open-service-modal" data-id="${sv.id}">تعديل</button>
+                        <button class="icon-btn danger" data-action="delete-service" data-id="${sv.id}">حذف</button>
+                      </div>
+                    </td>
+                  </tr>
+                `).join('')
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <button class="btn-primary" data-action="save-settings">حفظ الإعدادات</button>
+    </div>
+  `;
+}
+
+/* ====================== صفحة النسخة الاحتياطية (مستقلة) ====================== */
+function renderBackup() {
+  return `
+    <div class="main">
+      <div class="topbar">
+        <div>
+          <h1>نسخة احتياطية للبيانات</h1>
+          <p class="subtitle">تصدير واستيراد بيانات العيادة</p>
+        </div>
+      </div>
+
+      ${state.importNotice ? `
+        <div class="notice-banner ${state.importNotice.type}">
+          <span>${esc(state.importNotice.text)}</span>
+          <button type="button" data-action="dismiss-import-notice" aria-label="إغلاق">✕</button>
+        </div>
+      ` : ''}
+
+      <div class="settings-section">
+        <h2>نسخة احتياطية للبيانات</h2>
+        <p class="section-label" style="margin-bottom:14px;">تقدر تصدّر كل بيانات العيادة (المرضى، المواعيد، الأطباء، الخدمات، الإعدادات) في ملف واحد تحتفظ بيه، وترجّعه تاني في أي وقت.</p>
+        <div class="logo-row" style="gap:10px;">
+          <button class="btn-primary" data-action="export-backup">⬇ تصدير نسخة احتياطية</button>
+          <button type="button" class="file-btn" id="importBackupBtn">⬆ استيراد نسخة احتياطية</button>
+          <input type="file" id="importBackupInput" accept=".json,application/json" style="display:none;">
+        </div>
+        <p style="font-size:11.5px;color:var(--text-2);margin:10px 0 0;">تنبيه: استيراد نسخة احتياطية هيستبدل كل البيانات الحالية بالبيانات اللي في الملف.</p>
+      </div>
+    </div>
+  `;
+}
+
+/* ====================== صفحة التقويم ====================== */
+function renderCalendar() {
+  const weekStart = state.calendarWeekStart;
+  const days = Array.from({ length: 7 }, (_, i) => addDaysISO(weekStart, i));
+  const statusLabel = { confirmed: 'مؤكد', pending: 'في الانتظار', cancelled: 'ملغي' };
+
+  return `
+    <div class="main">
+      <div class="topbar">
+        <div>
+          <h1>التقويم</h1>
+          <p class="subtitle">عرض أسبوعي لمواعيد العيادة</p>
+        </div>
+        <div class="row-actions">
+          <button class="icon-btn" data-action="calendar-prev-week">→ الأسبوع اللي فات</button>
+          <button class="icon-btn" data-action="calendar-today">اليوم</button>
+          <button class="icon-btn" data-action="calendar-next-week">الأسبوع الجاي ←</button>
+        </div>
+      </div>
+
+      <div class="calendar-grid">
+        ${days.map((iso) => {
+          const dayAppts = state.appointments.filter((a) => a.dateISO === iso).sort((a, b) => (a.timeKey || a.time).localeCompare(b.timeKey || b.time));
+          return `
+            <div class="calendar-day">
+              <div class="calendar-day-head">${formatArabicDateShort(iso)}</div>
+              <div class="calendar-day-body">
+                ${dayAppts.length === 0 ? `<p class="empty-hint" style="padding:14px 6px;">لا توجد مواعيد</p>` :
+                  dayAppts.map((a) => `
+                    <div class="calendar-appt ${visitTypeBadgeClass(a.visitType)}">
+                      <div class="calendar-appt-row">
+                        <span class="calendar-appt-time">${esc(a.time)}</span>
+                        <span class="calendar-appt-name">${esc(a.patientName)}</span>
+                      </div>
+                      <div class="calendar-appt-doctor">${esc(getDoctorName(a.doctorId))} &middot; ${esc(a.service)}</div>
+                      <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:3px;">
+                        <span class="badge ${a.status}">${statusLabel[a.status]}</span>
+                        ${a.visitType ? `<span class="badge ${visitTypeBadgeClass(a.visitType)}">${esc(a.visitType)}</span>` : ''}
+                      </div>
+                    </div>
+                  `).join('')
+                }
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+  `;
+}
+
+/* ====================== صفحة الفواتير ====================== */
+function renderBilling() {
+  const nonCancelled = state.appointments.filter((a) => a.status !== 'cancelled');
+  const collected = nonCancelled.filter((a) => a.paid).reduce((sum, a) => sum + getServicePrice(a.service), 0);
+  const outstanding = nonCancelled.filter((a) => !a.paid).reduce((sum, a) => sum + getServicePrice(a.service), 0);
+
+  const billingQuery = state.billingQuery || '';
+  const statusFilter = state.billingStatusFilter;
+  const filteredAppts = state.appointments.filter((a) => {
+    const matchesQuery = a.patientName.includes(billingQuery) || a.service.includes(billingQuery);
+    const matchesStatus = statusFilter === 'all'
+      || (statusFilter === 'paid' && a.status !== 'cancelled' && a.paid)
+      || (statusFilter === 'unpaid' && a.status !== 'cancelled' && !a.paid)
+      || (statusFilter === 'cancelled' && a.status === 'cancelled');
+    return matchesQuery && matchesStatus;
+  });
+
+  return `
+    <div class="main">
+      <div class="topbar">
+        <div>
+          <h1>الفواتير والمدفوعات</h1>
+          <p class="subtitle">حالة الدفع لكل موعد بناءً على سعر الخدمة</p>
+        </div>
+        <div class="row-actions">
+          <button class="icon-btn" data-action="export-excel" data-target="billingTable" data-filename="فواتير-${esc(state.settings.clinicName)}">⬇️ Excel</button>
+          <button class="icon-btn" data-action="export-pdf" data-target="billingTable" data-filename="فواتير-${esc(state.settings.clinicName)}" data-title="تقرير الفواتير والمدفوعات">⬇️ PDF</button>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="label">إجمالي المحصّل</div><div class="value">${formatMoney(collected)} جنيه</div></div>
+        <div class="stat"><div class="label">إجمالي المعلّق</div><div class="value amber">${formatMoney(outstanding)} جنيه</div></div>
+        <div class="stat"><div class="label">عدد الفواتير</div><div class="value">${nonCancelled.length}</div></div>
+      </div>
+
+      <div class="list-toolbar">
+        <div class="search-bar">
+          <input type="text" id="billingSearch" placeholder="ابحث باسم المريض أو الخدمة" value="${esc(billingQuery)}">
+        </div>
+        <select id="billingStatusFilter" class="filter-select">
+          <option value="all" ${statusFilter === 'all' ? 'selected' : ''}>كل الفواتير</option>
+          <option value="paid" ${statusFilter === 'paid' ? 'selected' : ''}>مدفوع</option>
+          <option value="unpaid" ${statusFilter === 'unpaid' ? 'selected' : ''}>معلّق</option>
+          <option value="cancelled" ${statusFilter === 'cancelled' ? 'selected' : ''}>ملغي</option>
+        </select>
+      </div>
+
+      <div class="table-card" id="billingTable">
+        <table class="data-table">
+          <thead>
+            <tr><th>المريض</th><th>الخدمة</th><th>السعر</th><th>الموعد</th><th>حالة الدفع</th><th class="no-export"></th></tr>
+          </thead>
+          <tbody>
+            ${filteredAppts.length === 0 ? `<tr><td colspan="6" class="empty-hint">مفيش فواتير مطابقة للبحث أو الفلتر المختار</td></tr>` :
+              filteredAppts.map((a) => `
+                <tr>
+                  <td>${esc(a.patientName)}</td>
+                  <td>${esc(a.service)}</td>
+                  <td class="price-cell">${formatMoney(getServicePrice(a.service))} جنيه</td>
+                  <td>${esc(a.date)} — ${esc(a.time)}</td>
+                  <td>
+                    ${a.status === 'cancelled'
+                      ? `<span class="badge cancelled">ملغي — بدون فاتورة</span>`
+                      : `<span class="badge ${a.paid ? 'confirmed' : 'pending'}">${a.paid ? 'مدفوع' : 'معلّق'}</span>`}
+                  </td>
+                  <td class="no-export">
+                    <div class="row-actions">
+                      ${a.status === 'cancelled' ? '' :
+                        `<button class="icon-btn ${a.paid ? '' : 'confirm'}" data-action="toggle-paid" data-id="${a.id}">${a.paid ? 'وضع كمعلّق' : 'تسجيل كمدفوع'}</button>`
+                      }
+                      ${a.status === 'cancelled' ? '' :
+                        `<button class="icon-btn" data-action="download-invoice" data-id="${a.id}">🧾 الفاتورة</button>`
+                      }
+                    </div>
+                  </td>
+                </tr>
+              `).join('')
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+/* ====================== صفحة الرواتب والمصروفات ====================== */
+function renderExpenses() {
+  const q = state.expenseQuery;
+  const typeFilter = state.expenseTypeFilter;
+  const statusFilter = state.expenseStatusFilter;
+  const filtered = state.expenses.filter((ex) => {
+    const matchesQuery = ex.name.includes(q) || ex.category.includes(q);
+    const matchesType = typeFilter === 'all' || ex.type === typeFilter;
+    const matchesStatus = statusFilter === 'all' || ex.status === statusFilter;
+    return matchesQuery && matchesType && matchesStatus;
+  });
+  const typeLabel = { salary: 'راتب', expense: 'مصروف' };
+  const admin = isAdmin();
+
+  const totalSalaries = state.expenses.filter((ex) => ex.type === 'salary').reduce((sum, ex) => sum + ex.amount, 0);
+  const totalExpenses = state.expenses.filter((ex) => ex.type === 'expense').reduce((sum, ex) => sum + ex.amount, 0);
+  const grandTotal = totalSalaries + totalExpenses;
+  const pendingTotal = state.expenses.filter((ex) => ex.status !== 'paid').reduce((sum, ex) => sum + ex.amount, 0);
+
+  const collectedRevenue = state.appointments.filter((a) => a.status !== 'cancelled' && a.paid).reduce((sum, a) => sum + getServicePrice(a.service), 0);
+  const netEstimate = collectedRevenue - grandTotal;
+
+  return `
+    <div class="main">
+      <div class="topbar">
+        <div>
+          <h1>الرواتب والمصروفات</h1>
+          <p class="subtitle">متابعة رواتب الأطباء والموظفين ومصروفات العيادة</p>
+        </div>
+        <div class="row-actions">
+          <button class="icon-btn" data-action="export-excel" data-target="expensesTable" data-filename="رواتب-ومصروفات-${esc(state.settings.clinicName)}">⬇️ Excel</button>
+          <button class="icon-btn" data-action="export-pdf" data-target="expensesTable" data-filename="رواتب-ومصروفات-${esc(state.settings.clinicName)}" data-title="تقرير الرواتب والمصروفات">⬇️ PDF</button>
+          ${admin ? `<button class="btn-primary" data-action="open-expense-modal">+ إضافة سجل جديد</button>` : ''}
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="label">إجمالي الرواتب</div><div class="value">${formatMoney(totalSalaries)} جنيه</div></div>
+        <div class="stat"><div class="label">إجمالي المصروفات</div><div class="value amber">${formatMoney(totalExpenses)} جنيه</div></div>
+        <div class="stat"><div class="label">إجمالي المعلّق للدفع</div><div class="value amber">${formatMoney(pendingTotal)} جنيه</div></div>
+      </div>
+
+      <div class="settings-section">
+        <h2>الملخص المالي</h2>
+        <div class="stats" style="margin-bottom:0;">
+          <div class="stat"><div class="label">إجمالي الإيرادات المحصّلة</div><div class="value">${formatMoney(collectedRevenue)} جنيه</div></div>
+          <div class="stat"><div class="label">إجمالي الرواتب والمصروفات</div><div class="value amber">${formatMoney(grandTotal)} جنيه</div></div>
+          <div class="stat"><div class="label">صافي الربح التقديري</div><div class="value">${formatMoney(netEstimate)} جنيه</div></div>
+        </div>
+      </div>
+
+      <div class="list-toolbar">
+        <div class="search-bar">
+          <input type="text" id="expenseSearch" placeholder="ابحث بالاسم أو الفئة" value="${esc(q)}">
+        </div>
+        <select id="expenseTypeFilter" class="filter-select">
+          <option value="all" ${typeFilter === 'all' ? 'selected' : ''}>كل الأنواع</option>
+          <option value="salary" ${typeFilter === 'salary' ? 'selected' : ''}>رواتب</option>
+          <option value="expense" ${typeFilter === 'expense' ? 'selected' : ''}>مصروفات</option>
+        </select>
+        <select id="expenseStatusFilter" class="filter-select">
+          <option value="all" ${statusFilter === 'all' ? 'selected' : ''}>كل الحالات</option>
+          <option value="paid" ${statusFilter === 'paid' ? 'selected' : ''}>مدفوع</option>
+          <option value="pending" ${statusFilter === 'pending' ? 'selected' : ''}>معلّق</option>
+        </select>
+      </div>
+
+      <div class="table-card" id="expensesTable">
+        <table class="data-table">
+          <thead>
+            <tr><th>البيان</th><th>النوع</th><th>الفئة</th><th>المبلغ</th><th>التاريخ</th><th>حالة الدفع</th><th class="no-export"></th></tr>
+          </thead>
+          <tbody>
+            ${filtered.length === 0 ? `<tr><td colspan="7" class="empty-hint">مفيش سجلات رواتب أو مصروفات مطابقة للبحث أو الفلاتر</td></tr>` :
+              filtered.map((ex) => `
+                <tr>
+                  <td>${esc(ex.name)}</td>
+                  <td><span class="badge ${ex.type}">${typeLabel[ex.type]}</span></td>
+                  <td>${esc(ex.category || '—')}</td>
+                  <td class="price-cell">${formatMoney(ex.amount)} جنيه</td>
+                  <td>${esc(ex.date)}</td>
+                  <td><span class="badge ${ex.status === 'paid' ? 'confirmed' : 'pending'}">${ex.status === 'paid' ? 'مدفوع' : 'معلّق'}</span></td>
+                  <td class="no-export">
+                    <div class="row-actions">
+                      <button class="icon-btn ${ex.status === 'paid' ? '' : 'confirm'}" data-action="toggle-expense-paid" data-id="${ex.id}">${ex.status === 'paid' ? 'وضع كمعلّق' : 'تسجيل كمدفوع'}</button>
+                      ${admin ? `<button class="icon-btn" data-action="open-expense-modal" data-id="${ex.id}">تعديل</button>` : ''}
+                      ${admin ? `<button class="icon-btn danger" data-action="delete-expense" data-id="${ex.id}">حذف</button>` : ''}
+                    </div>
+                  </td>
+                </tr>
+              `).join('')
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+/* ====================== صفحة التقارير ====================== */
+function renderReports() {
+  const total = state.appointments.length;
+  const confirmed = state.appointments.filter((a) => a.status === 'confirmed').length;
+  const pending = state.appointments.filter((a) => a.status === 'pending').length;
+  const cancelled = state.appointments.filter((a) => a.status === 'cancelled').length;
+  const cancelRate = total ? Math.round((cancelled / total) * 100) : 0;
+  const revenue = state.appointments.filter((a) => a.status !== 'cancelled' && a.paid).reduce((sum, a) => sum + getServicePrice(a.service), 0);
+
+  const serviceCounts = {};
+  state.appointments.forEach((a) => { serviceCounts[a.service] = (serviceCounts[a.service] || 0) + 1; });
+  const topServices = Object.entries(serviceCounts).sort((a, b) => b[1] - a[1]);
+
+  const doctorCounts = {};
+  state.appointments.forEach((a) => {
+    const name = getDoctorName(a.doctorId);
+    doctorCounts[name] = (doctorCounts[name] || 0) + 1;
+  });
+  const doctorBreakdown = Object.entries(doctorCounts).sort((a, b) => b[1] - a[1]);
+
+  return `
+    <div class="main">
+      <div class="topbar">
+        <div>
+          <h1>التقارير والإحصائيات</h1>
+          <p class="subtitle">نظرة عامة على أداء العيادة بناءً على كل البيانات المسجلة</p>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="label">إجمالي الإيرادات المحصّلة</div><div class="value">${formatMoney(revenue)} جنيه</div></div>
+        <div class="stat"><div class="label">إجمالي المواعيد</div><div class="value">${total}</div></div>
+        <div class="stat"><div class="label">نسبة الإلغاء</div><div class="value amber">${cancelRate}٪</div></div>
+      </div>
+
+      <div class="settings-section">
+        <h2>حالة المواعيد</h2>
+        <div class="stats" style="margin-bottom:18px;">
+          <div class="stat"><div class="label">مؤكدة</div><div class="value">${confirmed}</div></div>
+          <div class="stat"><div class="label">في الانتظار</div><div class="value amber">${pending}</div></div>
+          <div class="stat"><div class="label">ملغاة</div><div class="value">${cancelled}</div></div>
+        </div>
+        ${renderDonutChart([
+          { label: 'مؤكدة', value: confirmed, color: 'var(--teal)' },
+          { label: 'في الانتظار', value: pending, color: 'var(--amber)' },
+          { label: 'ملغاة', value: cancelled, color: 'var(--rust)' },
+        ])}
+      </div>
+
+      <div class="settings-section">
+        <h2>أكتر الخدمات طلبًا</h2>
+        ${renderVerticalBarChart(topServices.slice(0, 8).map(([name, count]) => ({ label: name, value: count })))}
+      </div>
+
+      <div class="settings-section">
+        <h2>عدد المواعيد لكل طبيب</h2>
+        ${renderVerticalBarChart(doctorBreakdown.map(([name, count]) => ({ label: name, value: count, color: 'var(--amber)' })))}
+      </div>
+
+      <div class="settings-section">
+        <h2>تفاصيل الخدمات (جدول)</h2>
+        <div class="table-card">
+          <table class="data-table">
+            <thead><tr><th>الخدمة</th><th>عدد المواعيد</th></tr></thead>
+            <tbody>
+              ${topServices.length === 0 ? `<tr><td colspan="2" class="empty-hint">مفيش بيانات كفاية</td></tr>` :
+                topServices.map(([name, count]) => `<tr><td>${esc(name)}</td><td>${count}</td></tr>`).join('')
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* ====================== صفحة سجل النشاط ====================== */
+function renderActivityLog() {
+  return `
+    <div class="main">
+      <div class="topbar">
+        <div>
+          <h1>سجل النشاط</h1>
+          <p class="subtitle">كل التغييرات المهمة اللي حصلت في لوحة التحكم</p>
+        </div>
+        ${state.activityLog.length > 0 ? `<button class="icon-btn danger" data-action="clear-activity-log">مسح السجل</button>` : ''}
+      </div>
+
+      <div class="table-card">
+        <table class="data-table">
+          <thead><tr><th>الوقت</th><th>الحدث</th></tr></thead>
+          <tbody>
+            ${state.activityLog.length === 0 ? `<tr><td colspan="2" class="empty-hint">مفيش أي نشاط مسجل لسه</td></tr>` :
+              state.activityLog.map((entry) => `<tr><td style="white-space:nowrap;color:var(--text-2);">${esc(entry.time)}</td><td>${esc(entry.text)}</td></tr>`).join('')
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+function renderBooking() {
+  if (state.booking.done) {
+    return `
+      <div class="booking-page">
+        <div class="booking-wrap">
+          <div class="success-box">
+            <h3>تم إرسال طلب الحجز</h3>
+            <p>هيتم تأكيد الموعد من العيادة قريبًا، وهتلاقيه في جدول المواعيد.</p>
+            <button class="btn-primary" data-action="booking-new">حجز موعد تاني</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  const services = state.services.map((sv) => sv.name);
+  const activeDoctors = getActiveDoctors();
+  const selectedDoctor = activeDoctors.find((d) => d.id === state.booking.doctorId);
+
+  // نطاق الساعات المعروض بيتحدد حسب مواعيد عمل الطبيب المختار (لو متاح)، وإلا بيرجع للنطاق الافتراضي
+  const defaultStartHour = 9, defaultEndHour = 21;
+  const doctorStartHour = selectedDoctor ? parseInt((selectedDoctor.workingFrom || '09:00').split(':')[0], 10) : defaultStartHour;
+  const doctorEndHour = selectedDoctor ? parseInt((selectedDoctor.workingTo || '21:00').split(':')[0], 10) : defaultEndHour;
+  const hours = Array.from({ length: 12 }, (_, i) => i + 9).filter((h) => h >= doctorStartHour && h <= doctorEndHour);
+  const minutes = ['00', '15', '30', '45'];
+  const periods = ['ص', 'م'];
+
+  // تنبيه لو اليوم المختار مش من ضمن أيام عمل الطبيب المختار
+  const selectedDayName = dateISOToArabicDayName(state.booking.dateValue);
+  const doctorDayMismatch = selectedDoctor && selectedDayName && selectedDoctor.workingDays && selectedDoctor.workingDays.length
+    ? !selectedDoctor.workingDays.includes(selectedDayName) : false;
+
+  return `
+    <div class="booking-page">
+      <div class="booking-wrap">
+        <div class="booking-header">
+          <h1>احجز موعدك</h1>
+          <p>اختر الطبيب والموعد المناسب لك في أقل من دقيقة</p>
+        </div>
+
+        <p class="section-label">اختر نوع الكشف</p>
+        <div class="service-grid">
+          ${VISIT_TYPES.map((v) => `
+            <button class="service-card ${state.booking.visitType === v.value ? 'selected' : ''}" data-action="select-visit-type" data-value="${esc(v.value)}" title="${esc(v.hint)}">
+              <div class="service-icon">${v.icon}</div>
+              <div class="service-name">${esc(v.value)}</div>
+            </button>
+          `).join('')}
+        </div>
+
+        <p class="section-label">اختر الخدمة</p>
+        <div class="service-grid">
+          ${services.map((s, idx) => `
+            <button class="service-card ${state.booking.service === s ? 'selected' : ''}" data-action="select-service" data-value="${esc(s)}">
+              <div class="service-icon">${idx === 0 ? '🩺' : '📋'}</div>
+              <div class="service-name">${esc(s)}</div>
+            </button>
+          `).join('')}
+        </div>
+
+        <p class="section-label">اختر الطبيب</p>
+        <div class="card-list">
+          ${activeDoctors.length === 0 ? `<p class="empty-hint">مفيش أطباء متاحين</p>` :
+            activeDoctors.map((d) => `
+              <button class="doctor-card ${state.booking.doctorId === d.id ? 'selected' : ''}" data-action="select-doctor" data-id="${d.id}">
+                <div class="avatar">${esc(d.initials)}</div>
+                <div><h3>${esc(d.name)}</h3><p>${esc(d.specialty)}</p><p style="font-size:11px;color:var(--text-2);margin-top:2px;">مواعيده: ${esc(getDoctorScheduleLabel(d))}</p></div>
+              </button>
+            `).join('')
+          }
+        </div>
+
+        <p class="section-label">اختر التاريخ</p>
+        <div class="form-group">
+          <input type="date" id="bookingDate" value="${state.booking.dateValue || ''}">
+          ${doctorDayMismatch ? `<p style="font-size:12px;color:var(--rust-text);margin-top:6px;">${esc(selectedDoctor.name)} مش متاح يوم ${esc(selectedDayName)}. أيام عمله: ${esc(selectedDoctor.workingDays.join('، '))}</p>` : ''}
+        </div>
+
+        <p class="section-label">اختر الوقت${selectedDoctor ? ` (مواعيد ${esc(selectedDoctor.name)} من ${esc(selectedDoctor.workingFrom || '09:00')} إلى ${esc(selectedDoctor.workingTo || '21:00')})` : ''}</p>
+        <div class="time-picker-group">
+          <div class="time-picker-row">
+            <div class="time-input-wrapper">
+              <label>الساعة</label>
+              <select id="bookingHour" class="time-select">
+                <option value="">--</option>
+                ${hours.map((h) => `<option value="${h}" ${state.booking.hour == h ? 'selected' : ''}>${String(h).padStart(2, '0')}</option>`).join('')}
+              </select>
+            </div>
+            <div class="time-separator">:</div>
+            <div class="time-input-wrapper">
+              <label>الدقيقة</label>
+              <select id="bookingMinute" class="time-select">
+                <option value="">--</option>
+                ${minutes.map((m) => `<option value="${m}" ${state.booking.minute === m ? 'selected' : ''}>${m}</option>`).join('')}
+              </select>
+            </div>
+            <div class="time-separator"></div>
+            <div class="time-input-wrapper">
+              <label>الفترة</label>
+              <select id="bookingPeriod" class="time-select">
+                <option value="">--</option>
+                ${periods.map((p) => `<option value="${p}" ${state.booking.period === p ? 'selected' : ''}>${p}</option>`).join('')}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>الاسم بالكامل</label>
+          <input type="text" id="bookingName" placeholder="محمد عبد الله" value="${esc(state.booking.name || '')}">
+        </div>
+        <div class="form-group">
+          <label>رقم الموبايل</label>
+          <input type="tel" id="bookingPhone" placeholder="01xxxxxxxxx" value="${esc(state.booking.phone || '')}">
+        </div>
+
+        <div class="summary-card">
+          <h3>ملخص الحجز</h3>
+          <div class="row"><span>نوع الكشف</span><span>${state.booking.visitType ? esc(state.booking.visitType) : '—'}</span></div>
+          <div class="row"><span>الخدمة</span><span>${state.booking.service ? esc(state.booking.service) : '—'}</span></div>
+          <div class="row"><span>الطبيب</span><span>${selectedDoctor ? esc(selectedDoctor.name) : '—'}</span></div>
+          <div class="row"><span>التاريخ</span><span>${state.booking.dateLabel || '—'}</span></div>
+          <div class="row"><span>الوقت</span><span>${(state.booking.hour && state.booking.minute && state.booking.period) ? `${state.booking.hour}:${state.booking.minute} ${state.booking.period}` : '—'}</span></div>
+        </div>
+
+        <button class="confirm-btn" data-action="confirm-booking">✓ تأكيد الحجز</button>
+      </div>
+    </div>
+  `;
+}
+
+/* ====================== صفحة تسجيل الدخول ====================== */
+function renderLogin() {
+  const s = state.settings;
+  const logoHtml = s.logo
+    ? `<img src="${s.logo}" alt="" style="width:100%;height:100%;object-fit:cover;">`
+    : `<span>${esc(initials(s.clinicName))}</span>`;
+  return `
+    <div class="login-page">
+      ${themeToggleButton('theme-toggle-floating')}
+      <div class="login-card">
+        <div class="login-logo">${logoHtml}</div>
+        <h1>${esc(s.clinicName)}</h1>
+        <p class="login-sub">تسجيل الدخول للوحة التحكم</p>
+        ${state.loginNotice ? `
+          <div class="notice-banner ${state.loginNotice.type}" style="text-align:right;">
+            <span>${esc(state.loginNotice.text)}</span>
+            <button type="button" data-action="dismiss-login-notice" aria-label="إغلاق">✕</button>
+          </div>
+        ` : ''}
+        <div class="form-group">
+          <label>كلمة السر</label>
+          <div class="password-wrapper">
+            <input type="password" id="loginPassword" placeholder="ادخل كلمة السر">
+            <button type="button" class="password-toggle" data-action="toggle-password" data-target="loginPassword" aria-label="إظهار/إخفاء كلمة السر">${eyeIcon(false)}</button>
+          </div>
+        </div>
+        ${state.loginError ? `<p class="login-error">كلمة السر غير صحيحة، حاول تاني</p>` : ''}
+        <button class="btn-primary" style="width:100%;" data-action="do-login">دخول</button>
+        <p style="font-size:11px;color:var(--text-2);text-align:center;margin:10px 0 0;">كلمة سر المدير بتديك كل الصلاحيات، وكلمة سر الموظف بتديك صلاحيات حجز مواعيد ورواتب/مصروفات محدودة.</p>
+        <button class="icon-btn" style="width:100%;margin-top:10px;background:transparent;border:none;color:var(--text-2);" data-action="open-forgot-password">نسيت كلمة السر؟</button>
+        <button class="icon-btn" style="width:100%;margin-top:2px;" data-page="booking">أنا مريض، عايز أحجز موعد</button>
+      </div>
+    </div>
+  `;
+}
+
+/* ====================== المودالات ====================== */
+function renderModal() {
+  if (!state.modal) return '';
+  const { type, editingId } = state.modal;
+
+  if (type === 'patient') {
+    const p = editingId ? state.patients.find((x) => x.id === editingId) : null;
+    return `
+      <div class="modal-backdrop" data-action="close-modal">
+        <div class="modal-card" onclick="event.stopPropagation()">
+          <h2>${p ? 'تعديل بيانات المريض' : 'إضافة مريض جديد'}</h2>
+          <div class="form-group">
+            <label>الاسم بالكامل</label>
+            <input type="text" id="formPatientName" value="${esc(p ? p.name : '')}" placeholder="مثال: محمد عبد الله">
+          </div>
+          <div class="form-group">
+            <label>رقم الموبايل</label>
+            <input type="text" id="formPatientPhone" value="${esc(p ? p.phone : '')}" placeholder="01xxxxxxxxx">
+          </div>
+          <div class="modal-actions">
+            <button class="save" data-action="save-patient" data-id="${editingId || ''}">حفظ</button>
+            <button class="cancel" data-action="close-modal">إلغاء</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  if (type === 'doctor') {
+    const d = editingId ? state.doctors.find((x) => x.id === editingId) : null;
+    return `
+      <div class="modal-backdrop" data-action="close-modal">
+        <div class="modal-card" onclick="event.stopPropagation()">
+          <h2>${d ? 'تعديل بيانات الطبيب' : 'إضافة طبيب جديد'}</h2>
+          <div class="form-group">
+            <label>الاسم بالكامل</label>
+            <input type="text" id="formDoctorName" value="${esc(d ? d.name : '')}" placeholder="مثال: د. محمد عبد الله">
+          </div>
+          <div class="form-group">
+            <label>التخصص</label>
+            <input type="text" id="formDoctorSpecialty" value="${esc(d ? d.specialty : '')}" placeholder="مثال: استشاري باطنة">
+          </div>
+          <div class="form-group">
+            <label>رقم الموبايل (لإرسال واتساب)</label>
+            <input type="text" id="formDoctorPhone" value="${esc(d ? (d.phone || '') : '')}" placeholder="01xxxxxxxxx">
+          </div>
+          <div class="form-group">
+            <label>الحالة</label>
+            <select id="formDoctorStatus" class="select-field">
+              <option value="active" ${!d || d.status === 'active' ? 'selected' : ''}>متاح</option>
+              <option value="inactive" ${d && d.status === 'inactive' ? 'selected' : ''}>غير متاح</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>أيام العمل</label>
+            <div class="days-grid">
+              ${allDays.map((day) => `
+                <button type="button" class="day-toggle ${state.modal.workingDays.includes(day) ? 'on' : ''}" data-action="toggle-doctor-day" data-day="${day}">${day}</button>
+              `).join('')}
+            </div>
+          </div>
+          <div class="hours-row">
+            <div class="form-group">
+              <label>من الساعة</label>
+              <input type="time" id="formDoctorFrom" value="${esc(d ? (d.workingFrom || '09:00') : '09:00')}">
+            </div>
+            <div class="form-group">
+              <label>إلى الساعة</label>
+              <input type="time" id="formDoctorTo" value="${esc(d ? (d.workingTo || '21:00') : '21:00')}">
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button class="save" data-action="save-doctor" data-id="${editingId || ''}">حفظ</button>
+            <button class="cancel" data-action="close-modal">إلغاء</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  if (type === 'service') {
+    const sv = editingId ? state.services.find((x) => x.id === editingId) : null;
+    return `
+      <div class="modal-backdrop" data-action="close-modal">
+        <div class="modal-card" onclick="event.stopPropagation()">
+          <h2>${sv ? 'تعديل الخدمة' : 'إضافة خدمة جديدة'}</h2>
+          <div class="form-group">
+            <label>اسم الخدمة</label>
+            <input type="text" id="formServiceName" value="${esc(sv ? sv.name : '')}" placeholder="مثال: أشعة">
+          </div>
+          <div class="form-group">
+            <label>السعر (جنيه)</label>
+            <input type="number" id="formServicePrice" value="${sv ? sv.price : ''}" placeholder="مثال: 150">
+          </div>
+          <div class="modal-actions">
+            <button class="save" data-action="save-service" data-id="${editingId || ''}">حفظ</button>
+            <button class="cancel" data-action="close-modal">إلغاء</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  if (type === 'expense') {
+    const ex = editingId ? state.expenses.find((x) => x.id === editingId) : null;
+    return `
+      <div class="modal-backdrop" data-action="close-modal">
+        <div class="modal-card" onclick="event.stopPropagation()">
+          <h2>${ex ? 'تعديل السجل' : 'إضافة راتب أو مصروف جديد'}</h2>
+          <div class="form-group">
+            <label>النوع</label>
+            <select id="formExpenseType" class="select-field">
+              <option value="salary" ${!ex || ex.type === 'salary' ? 'selected' : ''}>راتب</option>
+              <option value="expense" ${ex && ex.type === 'expense' ? 'selected' : ''}>مصروف</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>البيان</label>
+            <input type="text" id="formExpenseName" value="${esc(ex ? ex.name : '')}" placeholder="مثال: راتب د. أحمد / فاتورة الكهرباء">
+          </div>
+          <div class="form-group">
+            <label>الفئة</label>
+            <input type="text" id="formExpenseCategory" value="${esc(ex ? ex.category : '')}" placeholder="مثال: رواتب / فواتير / مستلزمات طبية">
+          </div>
+          <div class="form-group">
+            <label>المبلغ (جنيه)</label>
+            <input type="number" id="formExpenseAmount" value="${ex ? ex.amount : ''}" placeholder="مثال: 1000">
+          </div>
+          <div class="form-group">
+            <label>التاريخ</label>
+            <input type="date" id="formExpenseDate" value="${ex ? ex.dateISO || '' : ''}">
+          </div>
+          <div class="form-group">
+            <label>حالة الدفع</label>
+            <select id="formExpenseStatus" class="select-field">
+              <option value="paid" ${!ex || ex.status === 'paid' ? 'selected' : ''}>مدفوع</option>
+              <option value="pending" ${ex && ex.status === 'pending' ? 'selected' : ''}>معلّق</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>ملاحظات (اختياري)</label>
+            <textarea id="formExpenseNotes" rows="2" placeholder="أي تفاصيل إضافية">${esc(ex ? ex.notes || '' : '')}</textarea>
+          </div>
+          <div class="modal-actions">
+            <button class="save" data-action="save-expense" data-id="${editingId || ''}">حفظ</button>
+            <button class="cancel" data-action="close-modal">إلغاء</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  if (type === 'confirm') {
+    return `
+      <div class="modal-backdrop" data-action="close-modal">
+        <div class="modal-card" onclick="event.stopPropagation()">
+          <h2>${esc(state.modal.message)}</h2>
+          <div class="modal-actions">
+            <button class="save" style="background:var(--rust);" data-action="${esc(state.modal.confirmAction)}" data-id="${state.modal.targetId || ''}">تأكيد الحذف</button>
+            <button class="cancel" data-action="close-modal">إلغاء</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  if (type === 'import-confirm') {
+    return `
+      <div class="modal-backdrop" data-action="close-modal">
+        <div class="modal-card" onclick="event.stopPropagation()">
+          <h2>تأكيد استيراد النسخة الاحتياطية</h2>
+          <p style="font-size:13px;color:var(--text-2);margin:0 0 6px;">هيتم استبدال كل بيانات العيادة الحالية (المرضى، المواعيد، الأطباء، الخدمات، الإعدادات) بالبيانات اللي في الملف، والخطوة دي مينفعش تتراجع عنها.</p>
+          <div class="modal-actions">
+            <button class="save" style="background:var(--rust);" data-action="confirm-import-backup">تأكيد الاستيراد</button>
+            <button class="cancel" data-action="close-modal">إلغاء</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  if (type === 'appointment') {
+    return `
+      <div class="modal-backdrop" data-action="close-modal">
+        <div class="modal-card" onclick="event.stopPropagation()">
+          <h2>حجز موعد جديد</h2>
+          <div class="form-group">
+            <label>اسم المريض</label>
+            <select id="formApptPatientSelect" class="select-field">
+              <option value="">اختر مريض من القائمة</option>
+              ${state.patients.map((p) => `<option value="${p.id}" ${state.modal.selectedPatientId == p.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}
+              <option value="__new__" ${state.modal.newPatientMode ? 'selected' : ''}>+ مريض جديد (اسم مش موجود بالقائمة)</option>
+            </select>
+          </div>
+          ${state.modal.newPatientMode ? `
+          <div class="form-group">
+            <label>اسم المريض الجديد</label>
+            <input type="text" id="formApptNewPatientName" value="${esc(state.modal.newPatientName || '')}" placeholder="مثال: محمد عبد الله">
+          </div>
+          <div class="form-group">
+            <label>موبايل المريض (اختياري)</label>
+            <input type="text" id="formApptNewPatientPhone" value="${esc(state.modal.newPatientPhone || '')}" placeholder="01xxxxxxxxx">
+          </div>
+          ` : ''}
+          <div class="form-group">
+            <label>الطبيب</label>
+            <select id="formApptDoctor" class="select-field">
+              <option value="">اختر الطبيب</option>
+              ${state.doctors.map((d) => `<option value="${d.id}" data-from="${esc(d.workingFrom || '09:00')}" data-to="${esc(d.workingTo || '21:00')}" data-days="${esc((d.workingDays || []).join('،'))}">${esc(d.name)}</option>`).join('')}
+            </select>
+            <p id="apptDoctorScheduleHint" style="font-size:11.5px;color:var(--text-2);margin:6px 0 0;"></p>
+          </div>
+          <div class="form-group">
+            <label>نوع الكشف</label>
+            <select id="formApptVisitType" class="select-field">
+              ${VISIT_TYPES.map((v) => `<option value="${esc(v.value)}" ${state.modal.visitType === v.value ? 'selected' : ''}>${v.icon} ${esc(v.value)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>الخدمة</label>
+            <select id="formApptService" class="select-field">
+              ${state.services.map((sv) => `<option value="${esc(sv.name)}">${esc(sv.name)} — ${formatMoney(sv.price)} جنيه</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>اليوم</label>
+            <input type="date" id="formApptDate">
+          </div>
+          <div class="form-group">
+            <label>الوقت</label>
+            <input type="time" id="formApptTime">
+          </div>
+          <div class="modal-actions">
+            <button class="save" data-action="save-appointment">حفظ الموعد</button>
+            <button class="cancel" data-action="close-modal">إلغاء</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  if (type === 'medical') {
+    return `
+      <div class="modal-backdrop" data-action="close-modal">
+        <div class="modal-card" onclick="event.stopPropagation()">
+          <h2>إضافة تسجيلة طبية</h2>
+          <div class="form-group">
+            <label>العنوان</label>
+            <input type="text" id="formMedicalTitle" placeholder="مثال: كشف عام / تحليل / أشعة">
+          </div>
+          <div class="form-group">
+            <label>التاريخ</label>
+            <input type="date" id="formMedicalDate">
+          </div>
+          <div class="form-group">
+            <label>ملاحظات</label>
+            <textarea id="formMedicalNote" rows="3" placeholder="تفاصيل الحالة أو التشخيص أو العلاج"></textarea>
+          </div>
+          <div class="modal-actions">
+            <button class="save" data-action="save-medical-entry" data-id="${state.modal.patientId}">حفظ</button>
+            <button class="cancel" data-action="close-modal">إلغاء</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  if (type === 'forgot-password') {
+    const s = state.settings;
+    if (state.forgotPasswordStep === 'reset') {
+      return `
+        <div class="modal-backdrop" data-action="close-modal">
+          <div class="modal-card" onclick="event.stopPropagation()">
+            <h2>تحديد كلمة سر جديدة</h2>
+            <p style="font-size:13px;color:var(--text-2);margin:0 0 14px;">الإجابة صحيحة، اكتب كلمة السر الجديدة اللي عايز تستخدمها.</p>
+            <div class="form-group">
+              <label>كلمة سر جديدة</label>
+              <div class="password-wrapper">
+                <input type="password" id="forgotNewPassword">
+                <button type="button" class="password-toggle" data-action="toggle-password" data-target="forgotNewPassword" aria-label="إظهار/إخفاء كلمة السر">${eyeIcon(false)}</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>تأكيد كلمة السر الجديدة</label>
+              <div class="password-wrapper">
+                <input type="password" id="forgotConfirmPassword">
+                <button type="button" class="password-toggle" data-action="toggle-password" data-target="forgotConfirmPassword" aria-label="إظهار/إخفاء كلمة السر">${eyeIcon(false)}</button>
+              </div>
+            </div>
+            <div class="modal-actions">
+              <button class="save" data-action="reset-password-via-question">تحديث كلمة السر</button>
+              <button class="cancel" data-action="close-modal">إلغاء</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    return `
+      <div class="modal-backdrop" data-action="close-modal">
+        <div class="modal-card" onclick="event.stopPropagation()">
+          <h2>استرجاع كلمة السر</h2>
+          <div class="form-group">
+            <label>سؤال الأمان</label>
+            <p style="font-size:13.5px;color:var(--text-0);margin:0 0 4px;">${esc(s.securityQuestion)}</p>
+          </div>
+          <div class="form-group">
+            <label>إجابتك</label>
+            <input type="text" id="forgotAnswerInput" placeholder="اكتب الإجابة">
+          </div>
+          ${state.forgotPasswordError ? `<p class="login-error">الإجابة مش صحيحة، حاول تاني</p>` : ''}
+          <div class="modal-actions">
+            <button class="save" data-action="check-security-answer">تحقق</button>
+            <button class="cancel" data-action="close-modal">إلغاء</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  return '';
+}
+
+/* ====================== الرندر الرئيسي ====================== */
+function wireLoginField() {
+  const input = document.getElementById('loginPassword');
+  if (!input) return;
+  input.focus();
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const btn = document.querySelector('[data-action="do-login"]');
+      if (btn) btn.click();
+    }
+  });
+}
+
+function wireSearch(inputId, stateKey) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  input.addEventListener('input', (e) => {
+    state[stateKey] = e.target.value;
+    render();
+    const el = document.getElementById(inputId);
+    if (el) { el.focus(); el.selectionStart = el.selectionEnd = el.value.length; }
+  });
+}
+
+function wireFilter(selectId, stateKey) {
+  const select = document.getElementById(selectId);
+  if (!select) return;
+  select.addEventListener('change', (e) => {
+    state[stateKey] = e.target.value;
+    render();
+  });
+}
+
+function render() {
+  const app = document.getElementById('app');
+  document.body.className = [
+    state.theme === 'light' ? 'theme-light' : '',
+    state.sidebarOpen ? 'sidebar-locked' : '',
+  ].filter(Boolean).join(' ');
+
+  if (!state.auth.loggedIn && state.currentPage !== 'booking') {
+    app.innerHTML = renderLogin() + renderModal();
+    attachHandlers();
+    if (!state.modal) wireLoginField();
+    return;
+  }
+
+  if (state.auth.loggedIn && state.currentPage !== 'booking' && !isPageAllowed(state.currentPage)) {
+    state.currentPage = 'dashboard';
+  }
+
+  let body;
+  if (state.currentPage === 'booking') {
+    body = topNav() + renderBooking();
+  } else {
+    let pageHtml;
+    if (state.pageLoading) pageHtml = renderSkeleton();
+    else if (state.currentPage === 'patients') pageHtml = renderPatients();
+    else if (state.currentPage === 'patient-detail') pageHtml = renderPatientDetail();
+    else if (state.currentPage === 'doctors') pageHtml = renderDoctors();
+    else if (state.currentPage === 'settings') pageHtml = renderSettings();
+    else if (state.currentPage === 'backup') pageHtml = renderBackup();
+    else if (state.currentPage === 'calendar') pageHtml = renderCalendar();
+    else if (state.currentPage === 'billing') pageHtml = renderBilling();
+    else if (state.currentPage === 'expenses') pageHtml = renderExpenses();
+    else if (state.currentPage === 'reports') pageHtml = renderReports();
+    else if (state.currentPage === 'activity-log') pageHtml = renderActivityLog();
+    else pageHtml = renderDashboard();
+
+    body = topNav(true) + `<div class="container">${sidebar()}${pageHtml}</div>`;
+  }
+  app.innerHTML = body + renderModal();
+  attachHandlers();
+
+  // ربط حقول البحث (المواعيد / المرضى / الأطباء)
+  wireSearch('apptSearch', 'apptQuery');
+  wireSearch('patientSearch', 'patientQuery');
+  wireSearch('doctorSearch', 'doctorQuery');
+  wireSearch('expenseSearch', 'expenseQuery');
+  wireSearch('billingSearch', 'billingQuery');
+
+  // ربط قوائم الفلترة
+  wireFilter('apptStatusFilter', 'apptStatusFilter');
+  wireFilter('apptDateFilter', 'apptDateFilter');
+  wireFilter('patientStatusFilter', 'patientStatusFilter');
+  wireFilter('doctorStatusFilter', 'doctorStatusFilter');
+  wireFilter('billingStatusFilter', 'billingStatusFilter');
+  wireFilter('expenseTypeFilter', 'expenseTypeFilter');
+  wireFilter('expenseStatusFilter', 'expenseStatusFilter');
+
+  if (state.currentPage === 'settings') {
+    const logoInput = document.getElementById('logoUpload');
+    if (logoInput) {
+      logoInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          state.settings.logo = reader.result;
+          render();
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+  }
+
+  if (state.currentPage === 'backup') {
+    const importBtn = document.getElementById('importBackupBtn');
+    const importInput = document.getElementById('importBackupInput');
+    if (importBtn && importInput) {
+      importBtn.addEventListener('click', () => importInput.click());
+      importInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          let data;
+          try {
+            data = JSON.parse(reader.result);
+          } catch (err) {
+            state.importNotice = { type: 'error', text: 'الملف ده مش ملف نسخة احتياطية صالح.' };
+            render();
+            return;
+          }
+          const looksValid = data && typeof data === 'object' &&
+            Array.isArray(data.doctors) && Array.isArray(data.patients) &&
+            Array.isArray(data.appointments) && Array.isArray(data.services) &&
+            data.settings && typeof data.settings === 'object';
+          // ملاحظة: state.expenses حقل أحدث؛ الملفات القديمة من غير بيانات رواتب/مصروفات لسه تُعتبر صالحة
+          if (!looksValid) {
+            state.importNotice = { type: 'error', text: 'الملف ده مش ملف نسخة احتياطية صالح لتطبيق العيادة.' };
+            render();
+            return;
+          }
+          state.pendingImportData = data;
+          state.modal = { type: 'import-confirm' };
+          render();
+        };
+        reader.readAsText(file);
+      });
+    }
+  }
+
+  if (state.currentPage === 'booking') {
+    const dateInput = document.getElementById('bookingDate');
+    if (dateInput) {
+      dateInput.addEventListener('change', (e) => {
+        state.booking.dateValue = e.target.value;
+        if (e.target.value) {
+          const date = new Date(e.target.value);
+          const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+          const months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+          state.booking.dateLabel = `${days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+        } else {
+          state.booking.dateLabel = null;
+        }
+        render();
+      });
+    }
+    ['bookingHour', 'bookingMinute', 'bookingPeriod'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('change', (e) => {
+        if (id === 'bookingHour') state.booking.hour = e.target.value;
+        if (id === 'bookingMinute') state.booking.minute = e.target.value;
+        if (id === 'bookingPeriod') state.booking.period = e.target.value;
+        render();
+      });
+    });
+    ['bookingName', 'bookingPhone'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('input', (e) => {
+        if (id === 'bookingName') state.booking.name = e.target.value;
+        if (id === 'bookingPhone') state.booking.phone = e.target.value;
+      });
+    });
+  }
+
+  if (state.modal && state.modal.type === 'appointment') {
+    const patientSelect = document.getElementById('formApptPatientSelect');
+    if (patientSelect) {
+      patientSelect.addEventListener('change', (e) => {
+        const val = e.target.value;
+        state.modal.selectedPatientId = val === '__new__' ? '' : val;
+        state.modal.newPatientMode = val === '__new__';
+        render();
+      });
+    }
+    const newNameInput = document.getElementById('formApptNewPatientName');
+    if (newNameInput) {
+      newNameInput.addEventListener('input', (e) => { state.modal.newPatientName = e.target.value; });
+    }
+    const newPhoneInput = document.getElementById('formApptNewPatientPhone');
+    if (newPhoneInput) {
+      newPhoneInput.addEventListener('input', (e) => { state.modal.newPatientPhone = e.target.value; });
+    }
+    const doctorSelect = document.getElementById('formApptDoctor');
+    const timeInput = document.getElementById('formApptTime');
+    const scheduleHint = document.getElementById('apptDoctorScheduleHint');
+    if (doctorSelect && timeInput && scheduleHint) {
+      const applyDoctorSchedule = () => {
+        const opt = doctorSelect.options[doctorSelect.selectedIndex];
+        if (!opt || !opt.value) { scheduleHint.textContent = ''; timeInput.removeAttribute('min'); timeInput.removeAttribute('max'); return; }
+        const from = opt.dataset.from || '09:00';
+        const to = opt.dataset.to || '21:00';
+        const days = opt.dataset.days ? opt.dataset.days.split('،').filter(Boolean) : [];
+        timeInput.min = from;
+        timeInput.max = to;
+        scheduleHint.textContent = `مواعيد الطبيب: ${days.length ? days.join('، ') : 'كل الأيام'} · من ${from} إلى ${to}`;
+      };
+      doctorSelect.addEventListener('change', applyDoctorSchedule);
+      applyDoctorSchedule();
+    }
+    const visitTypeSelect = document.getElementById('formApptVisitType');
+    if (visitTypeSelect) {
+      visitTypeSelect.addEventListener('change', (e) => { state.modal.visitType = e.target.value; });
+    }
+  }
+}
+
+/* ====================== معالجة الأحداث (Event delegation) ====================== */
+function attachHandlers() {
+  document.querySelectorAll('[data-page]').forEach((el) => {
+    el.addEventListener('click', (e) => {
+      e.preventDefault();
+      const targetPage = el.dataset.page;
+      const isSidebarNav = el.classList.contains('nav-item') && state.auth.loggedIn && targetPage !== state.currentPage;
+      state.currentPage = targetPage;
+      state.sidebarOpen = false;
+      if (state.currentPage !== 'booking') {
+        state.booking = { service: null, visitType: null, doctorId: null, date: null, done: false };
+      }
+      if (isSidebarNav) {
+        state.pageLoading = true;
+        render();
+        setTimeout(() => {
+          state.pageLoading = false;
+          render();
+        }, 320);
+      } else {
+        render();
+      }
+    });
+  });
+
+  document.querySelectorAll('[data-action]').forEach((el) => {
+    el.addEventListener('click', (e) => {
+      e.preventDefault();
+      const action = el.dataset.action;
+      const id = el.dataset.id ? Number(el.dataset.id) : null;
+
+      switch (action) {
+        case 'toggle-password': {
+          const input = document.getElementById(el.dataset.target);
+          if (!input) return;
+          const nowVisible = input.type === 'password';
+          input.type = nowVisible ? 'text' : 'password';
+          el.innerHTML = eyeIcon(nowVisible);
+          return;
+        }
+
+        // حماية إضافية: منع تنفيذ إجراءات إدارية لو المستخدم مسجّل دخول بصلاحيات موظف محدودة
+        default: {
+          const staffAddOnlyModals = ['open-patient-modal', 'open-expense-modal'];
+          const staffBlockedActions = [
+            'open-doctor-modal', 'delete-doctor', 'whatsapp-doctor',
+            'open-service-modal', 'delete-service',
+            'open-expense-modal', 'delete-expense', 'confirm-delete-expense',
+            'save-settings', 'toggle-day', 'toggle-doctor-day', 'save-doctor',
+            'export-backup', 'confirm-import-backup', 'clear-activity-log', 'confirm-clear-activity-log',
+            'delete-appt', 'toggle-paid',
+            'open-patient-modal', 'delete-patient', 'confirm-delete-patient', 'view-patient',
+          ];
+          if (!isAdmin() && staffBlockedActions.includes(action) && !(staffAddOnlyModals.includes(action) && !id)) {
+            return; // 'open-patient-modal' و 'open-expense-modal' من غير id (إضافة جديدة) مسموحة للموظف
+          }
+        }
+      }
+
+      const run = () => {
+        const shouldRender = performAction(action, el, id);
+        if (shouldRender !== false) render();
+      };
+      if (LOADING_ACTIONS.includes(action) && el.tagName === 'BUTTON' && !el.disabled) {
+        runWithLoading(el, run);
+      } else {
+        run();
+      }
+    });
+  });
+}
+
+function performAction(action, el, id) {
+      switch (action) {
+        case 'whatsapp-patient': {
+          const p = state.patients.find((x) => x.id === id);
+          if (!p || !p.phone) { showToast('مفيش رقم موبايل مسجل للمريض ده', 'error'); return false; }
+          const message = `مرحباً ${p.name}، معاك ${state.settings.clinicName}.`;
+          window.open(whatsappUrl(p.phone, message), '_blank');
+          return false;
+        }
+        case 'whatsapp-doctor': {
+          const d = state.doctors.find((x) => x.id === id);
+          if (!d || !d.phone) { showToast('مفيش رقم موبايل مسجل للطبيب ده', 'error'); return false; }
+          const message = `مرحباً ${d.name}، معاك إدارة ${state.settings.clinicName}.`;
+          window.open(whatsappUrl(d.phone, message), '_blank');
+          return false;
+        }
+        case 'whatsapp-appt-reminder': {
+          const a = state.appointments.find((x) => x.id === id);
+          if (!a) return false;
+          const patient = state.patients.find((p) => p.name === a.patientName);
+          if (!patient || !patient.phone) { showToast('رقم موبايل المريض ده مش متسجل في قائمة المرضى', 'error'); return false; }
+          const doctorName = getDoctorName(a.doctorId);
+          const message = `مرحباً ${a.patientName}، بنفكرك بموعدك في ${state.settings.clinicName} يوم ${a.date} الساعة ${a.time} مع ${doctorName} (${a.service}).`;
+          window.open(whatsappUrl(patient.phone, message), '_blank');
+          return false;
+        }
+        case 'export-excel': {
+          exportTableToExcel(el.dataset.target, el.dataset.filename || 'تصدير');
+          return false;
+        }
+        case 'export-pdf': {
+          exportTableToPDF(el.dataset.target, el.dataset.filename || 'تصدير', el.dataset.title || '');
+          return false;
+        }
+        case 'download-invoice': {
+          downloadInvoicePDF(id);
+          return false;
+        }
+        case 'export-backup': {
+          const backup = {
+            type: 'clinic-app-backup',
+            version: 1,
+            exportedAt: new Date().toISOString(),
+            doctors: state.doctors,
+            patients: state.patients,
+            appointments: state.appointments,
+            services: state.services,
+            expenses: state.expenses,
+            settings: state.settings,
+            nextId: state.nextId,
+          };
+          const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const dateStr = new Date().toISOString().slice(0, 10);
+          const safeName = (state.settings.clinicName || 'clinic').replace(/[\\/:*?"<>|]/g, '');
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `نسخة-احتياطية-${safeName}-${dateStr}.json`;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+          return false;
+        }
+        case 'open-patient-modal':
+          state.modal = { type: 'patient', editingId: id || null };
+          break;
+        case 'open-doctor-modal': {
+          const existingDoctor = id ? state.doctors.find((d) => d.id === id) : null;
+          state.modal = {
+            type: 'doctor',
+            editingId: id || null,
+            workingDays: existingDoctor ? [...(existingDoctor.workingDays || allDays)] : [...allDays],
+          };
+          break;
+        }
+        case 'open-appointment-modal':
+          state.modal = { type: 'appointment', editingId: null, selectedPatientId: '', newPatientMode: false, newPatientName: '', newPatientPhone: '', visitType: 'عادي' };
+          break;
+        case 'close-modal':
+          state.modal = null;
+          state.pendingImportData = null;
+          state.forgotPasswordStep = 'question';
+          state.forgotPasswordError = false;
+          break;
+
+        case 'dismiss-login-notice':
+          state.loginNotice = null;
+          break;
+
+        case 'open-forgot-password':
+          state.modal = { type: 'forgot-password' };
+          state.forgotPasswordStep = 'question';
+          state.forgotPasswordError = false;
+          break;
+
+        case 'check-security-answer': {
+          const attempt = document.getElementById('forgotAnswerInput').value.trim().toLowerCase();
+          const correct = state.settings.securityAnswer.trim().toLowerCase();
+          if (attempt && attempt === correct) {
+            state.forgotPasswordStep = 'reset';
+            state.forgotPasswordError = false;
+          } else {
+            state.forgotPasswordError = true;
+          }
+          break;
+        }
+        case 'reset-password-via-question': {
+          const newPassword = document.getElementById('forgotNewPassword').value.trim();
+          const confirmPassword = document.getElementById('forgotConfirmPassword').value.trim();
+          if (!newPassword || !confirmPassword) { showToast('من فضلك املأ كلمة السر الجديدة وتأكيدها', 'error'); return false; }
+          if (newPassword !== confirmPassword) { showToast('كلمة السر الجديدة وتأكيدها غير متطابقين', 'error'); return false; }
+          if (newPassword.length < 4) { showToast('كلمة السر الجديدة قصيرة جدًا (٤ حروف على الأقل)', 'error'); return false; }
+          state.settings.password = newPassword;
+          state.modal = null;
+          state.forgotPasswordStep = 'question';
+          state.forgotPasswordError = false;
+          state.loginNotice = { type: 'success', text: 'تم تغيير كلمة السر بنجاح، سجّل دخولك بيها دلوقتي.' };
+          logActivity('تم تغيير كلمة السر عن طريق سؤال الأمان (نسيت كلمة السر).');
+          break;
+        }
+
+        case 'dismiss-import-notice':
+          state.importNotice = null;
+          break;
+
+        case 'dismiss-settings-notice':
+          state.settingsNotice = null;
+          break;
+
+        case 'confirm-import-backup': {
+          const data = state.pendingImportData;
+          if (data) {
+            state.doctors = data.doctors;
+            state.patients = data.patients;
+            state.appointments = data.appointments;
+            state.services = data.services;
+            state.expenses = Array.isArray(data.expenses) ? data.expenses : [];
+            state.settings = { ...state.settings, ...data.settings };
+            if (data.nextId && typeof data.nextId === 'object') {
+              state.nextId = { ...state.nextId, ...data.nextId };
+            }
+          }
+          state.pendingImportData = null;
+          state.modal = null;
+          state.currentPage = 'backup';
+          state.importNotice = { type: 'success', text: 'تم استيراد النسخة الاحتياطية بنجاح.' };
+          logActivity('تم استيراد نسخة احتياطية جديدة، وتم استبدال بيانات العيادة بالكامل.');
+          break;
+        }
+
+        case 'save-patient': {
+          const name = document.getElementById('formPatientName').value.trim();
+          const phone = document.getElementById('formPatientPhone').value.trim();
+          
+          if (!validateName(name)) { 
+            showToast('الاسم يجب أن يكون أكثر من حرفين', 'error'); 
+            return false; 
+          }
+          if (!validatePhone(phone)) { 
+            showToast('رقم الموبايل غير صحيح (10-11 رقم)', 'error'); 
+            return false; 
+          }
+          
+          if (id) {
+            const p = state.patients.find((x) => x.id === id);
+            p.name = name; p.phone = phone; p.initials = initials(name);
+            logActivity(`تم تعديل بيانات المريض: ${name}`);
+          } else {
+            state.patients.push({ id: state.nextId.patient++, name, phone, initials: initials(name), visits: 0, lastVisit: '—', status: 'active', allergies: '', chronicConditions: '', medicalHistory: [] });
+            logActivity(`تم إضافة مريض جديد: ${name}`);
+          }
+          state.modal = null;
+          saveState();
+          break;
+        }
+        case 'delete-patient':
+          state.modal = { type: 'confirm', message: 'متأكد إنك عايز تحذف المريض ده؟', confirmAction: 'confirm-delete-patient', targetId: id };
+          break;
+        case 'confirm-delete-patient': {
+          const p = state.patients.find((x) => x.id === id);
+          state.patients = state.patients.filter((p) => p.id !== id);
+          state.modal = null;
+          if (p) logActivity(`تم حذف المريض: ${p.name}`);
+          saveState();
+          break;
+        }
+
+        case 'view-patient':
+          state.selectedPatientId = id;
+          state.currentPage = 'patient-detail';
+          break;
+        case 'back-to-patients':
+          state.currentPage = 'patients';
+          break;
+        case 'save-patient-notes': {
+          const p = state.patients.find((x) => x.id === id);
+          if (p) {
+            const notesEl = document.getElementById('patientConditionsInput');
+            const allergiesEl = document.getElementById('patientAllergiesInput');
+            p.chronicConditions = notesEl ? notesEl.value.trim() : p.chronicConditions;
+            p.allergies = allergiesEl ? allergiesEl.value.trim() : p.allergies;
+          }
+          break;
+        }
+        case 'open-medical-modal':
+          state.modal = { type: 'medical', patientId: id };
+          break;
+        case 'save-medical-entry': {
+          const title = document.getElementById('formMedicalTitle').value.trim();
+          const dateRaw = document.getElementById('formMedicalDate').value;
+          const note = document.getElementById('formMedicalNote').value.trim();
+          if (!title || !note) { showToast('من فضلك أدخل العنوان والملاحظات', 'error'); return false; }
+          const date = dateRaw ? formatArabicDate(dateRaw) : 'الأحد ٦ سبتمبر ٢٠٢٦';
+          const p = state.patients.find((x) => x.id === id);
+          if (p) p.medicalHistory.push({ id: state.nextId.medicalEntry++, date, title, note });
+          state.modal = null;
+          break;
+        }
+        case 'delete-medical-entry': {
+          const patientId = Number(el.dataset.patient);
+          const p = state.patients.find((x) => x.id === patientId);
+          if (p) p.medicalHistory = p.medicalHistory.filter((m) => m.id !== id);
+          break;
+        }
+
+        case 'save-doctor': {
+          const name = document.getElementById('formDoctorName').value.trim();
+          const specialty = document.getElementById('formDoctorSpecialty').value.trim();
+          const phone = document.getElementById('formDoctorPhone').value.trim();
+          const status = document.getElementById('formDoctorStatus').value;
+          const workingFrom = document.getElementById('formDoctorFrom').value || '09:00';
+          const workingTo = document.getElementById('formDoctorTo').value || '21:00';
+          const workingDays = [...state.modal.workingDays];
+          
+          if (!validateName(name)) { 
+            showToast('الاسم يجب أن يكون أكثر من حرفين', 'error'); 
+            return false; 
+          }
+          if (!validateName(specialty)) { 
+            showToast('التخصص يجب أن يكون أكثر من حرفين', 'error'); 
+            return false; 
+          }
+          if (phone && !validatePhone(phone)) { 
+            showToast('رقم الموبايل غير صحيح', 'error'); 
+            return false; 
+          }
+          if (workingDays.length === 0) {
+            showToast('اختار يوم عمل واحد على الأقل للطبيب', 'error');
+            return false;
+          }
+          if (workingFrom >= workingTo) {
+            showToast('وقت البداية لازم يكون قبل وقت النهاية', 'error');
+            return false;
+          }
+          
+          if (id) {
+            const d = state.doctors.find((x) => x.id === id);
+            d.name = name; d.specialty = specialty; d.phone = phone; d.status = status; d.initials = initials(name);
+            d.workingDays = workingDays; d.workingFrom = workingFrom; d.workingTo = workingTo;
+            logActivity(`تم تعديل بيانات الطبيب: ${name}`);
+          } else {
+            state.doctors.push({ id: state.nextId.doctor++, name, specialty, phone, status, initials: initials(name), workingDays, workingFrom, workingTo });
+            logActivity(`تم إضافة طبيب جديد: ${name}`);
+          }
+          state.modal = null;
+          saveState();
+          break;
+        }
+        case 'delete-doctor':
+          state.modal = { type: 'confirm', message: 'متأكد إنك عايز تحذف الطبيب ده؟', confirmAction: 'confirm-delete-doctor', targetId: id };
+          break;
+        case 'confirm-delete-doctor': {
+          const d = state.doctors.find((x) => x.id === id);
+          state.doctors = state.doctors.filter((d) => d.id !== id);
+          state.modal = null;
+          if (d) logActivity(`تم حذف الطبيب: ${d.name}`);
+          saveState();
+          break;
+        }
+
+        case 'open-service-modal':
+          state.modal = { type: 'service', editingId: id || null };
+          break;
+        case 'save-service': {
+          const name = document.getElementById('formServiceName').value.trim();
+          const price = Number(document.getElementById('formServicePrice').value);
+          
+          if (!validateName(name)) { 
+            showToast('اسم الخدمة يجب أن يكون أكثر من حرفين', 'error'); 
+            return false; 
+          }
+          if (!validatePrice(price)) { 
+            showToast('السعر يجب أن يكون رقم موجب', 'error'); 
+            return false; 
+          }
+          
+          if (id) {
+            const sv = state.services.find((x) => x.id === id);
+            sv.name = name; sv.price = price;
+            logActivity(`تم تعديل الخدمة: ${name} (${formatMoney(price)} جنيه)`);
+          } else {
+            state.services.push({ id: state.nextId.service++, name, price });
+            logActivity(`تم إضافة خدمة جديدة: ${name} (${formatMoney(price)} جنيه)`);
+          }
+          state.modal = null;
+          saveState();
+          break;
+        }
+        case 'delete-service':
+          state.modal = { type: 'confirm', message: 'متأكد إنك عايز تحذف الخدمة دي؟', confirmAction: 'confirm-delete-service', targetId: id };
+          break;
+        case 'confirm-delete-service': {
+          const sv = state.services.find((x) => x.id === id);
+          state.services = state.services.filter((sv) => sv.id !== id);
+          state.modal = null;
+          if (sv) logActivity(`تم حذف الخدمة: ${sv.name}`);
+          saveState();
+          break;
+        }
+
+        case 'open-expense-modal':
+          state.modal = { type: 'expense', editingId: id || null };
+          break;
+        case 'save-expense': {
+          const exType = document.getElementById('formExpenseType').value;
+          const name = document.getElementById('formExpenseName').value.trim();
+          const category = document.getElementById('formExpenseCategory').value.trim();
+          const amount = Number(document.getElementById('formExpenseAmount').value);
+          const dateRaw = document.getElementById('formExpenseDate').value;
+          const status = document.getElementById('formExpenseStatus').value;
+          const notes = document.getElementById('formExpenseNotes').value.trim();
+          
+          if (!validateName(name)) { 
+            showToast('البيان يجب أن يكون أكثر من حرفين', 'error'); 
+            return false; 
+          }
+          if (!validatePrice(amount)) { 
+            showToast('المبلغ يجب أن يكون رقم موجب', 'error'); 
+            return false; 
+          }
+          
+          const typeText = exType === 'salary' ? 'راتب' : 'مصروف';
+          if (id) {
+            const ex = state.expenses.find((x) => x.id === id);
+            const date = dateRaw ? formatArabicDate(dateRaw) : ex.date;
+            ex.type = exType; ex.name = name; ex.category = category; ex.amount = amount;
+            ex.date = date; ex.dateISO = dateRaw || ex.dateISO; ex.status = status; ex.notes = notes;
+            logActivity(`تم تعديل ${typeText}: ${name}`);
+          } else {
+            const date = dateRaw ? formatArabicDate(dateRaw) : 'الأحد ٦ سبتمبر ٢٠٢٦';
+            state.expenses.push({ id: state.nextId.expense++, type: exType, name, category, amount, date, dateISO: dateRaw || null, status, notes });
+            logActivity(`تم إضافة ${typeText} جديد: ${name} (${formatMoney(amount)} جنيه)`);
+          }
+          state.modal = null;
+          saveState();
+          break;
+        }
+        case 'toggle-expense-paid': {
+          const ex = state.expenses.find((x) => x.id === id);
+          ex.status = ex.status === 'paid' ? 'pending' : 'paid';
+          logActivity(`تم تسجيل ${ex.name} كـ${ex.status === 'paid' ? 'مدفوع' : 'معلّق'}`);
+          break;
+        }
+        case 'delete-expense':
+          state.modal = { type: 'confirm', message: 'متأكد إنك عايز تحذف السجل ده؟', confirmAction: 'confirm-delete-expense', targetId: id };
+          break;
+        case 'confirm-delete-expense': {
+          const ex = state.expenses.find((x) => x.id === id);
+          state.expenses = state.expenses.filter((x) => x.id !== id);
+          state.modal = null;
+          if (ex) logActivity(`تم حذف ${ex.type === 'salary' ? 'راتب' : 'مصروف'}: ${ex.name}`);
+          saveState();
+          break;
+        }
+
+        case 'toggle-day': {
+          const day = el.dataset.day;
+          const days = state.settings.workingDays;
+          if (days.includes(day)) {
+            state.settings.workingDays = days.filter((d) => d !== day);
+          } else {
+            state.settings.workingDays = [...days, day];
+          }
+          break;
+        }
+        case 'toggle-doctor-day': {
+          const day = el.dataset.day;
+          const days = state.modal.workingDays;
+          if (days.includes(day)) {
+            state.modal.workingDays = days.filter((d) => d !== day);
+          } else {
+            state.modal.workingDays = [...days, day];
+          }
+          break;
+        }
+        case 'save-settings': {
+          const name = document.getElementById('clinicNameInput').value.trim();
+          const currentPassword = document.getElementById('clinicPasswordCurrent').value.trim();
+          const newPassword = document.getElementById('clinicPasswordNew').value.trim();
+          const confirmPassword = document.getElementById('clinicPasswordConfirm').value.trim();
+          const securityQuestion = document.getElementById('securityQuestionSelect').value;
+          const securityAnswer = document.getElementById('securityAnswerInput').value.trim();
+          const staffPassword = document.getElementById('clinicStaffPassword').value.trim();
+          const from = document.getElementById('workingFrom').value;
+          const to = document.getElementById('workingTo').value;
+          if (!name) { showToast('من فضلك أدخل اسم العيادة', 'error'); return false; }
+          if (!currentPassword) { showToast('من فضلك أدخل كلمة سر لوحة التحكم الحالية', 'error'); return false; }
+          if (currentPassword !== state.settings.password) { showToast('كلمة السر الحالية غير صحيحة', 'error'); return false; }
+          if (newPassword || confirmPassword) {
+            if (newPassword !== confirmPassword) { showToast('كلمة السر الجديدة وتأكيدها غير متطابقين', 'error'); return false; }
+            if (newPassword.length < 4) { showToast('كلمة السر الجديدة قصيرة جدًا (٤ حروف على الأقل)', 'error'); return false; }
+          }
+          if (!securityAnswer) { showToast('من فضلك أدخل إجابة لسؤال الأمان عشان تقدر تسترجع كلمة السر لو نسيتها', 'error'); return false; }
+          if (!staffPassword || staffPassword.length < 4) { showToast('من فضلك أدخل كلمة سر للموظف (٤ حروف على الأقل)', 'error'); return false; }
+          if (staffPassword === (newPassword || currentPassword)) { showToast('كلمة سر الموظف لازم تكون مختلفة عن كلمة سر المدير', 'error'); return false; }
+          state.settings.clinicName = name;
+          state.settings.password = newPassword || currentPassword;
+          state.settings.securityQuestion = securityQuestion;
+          state.settings.securityAnswer = securityAnswer;
+          state.settings.staffPassword = staffPassword;
+          state.settings.workingFrom = from;
+          state.settings.workingTo = to;
+          state.settingsNotice = { type: 'success', text: 'تم حفظ الإعدادات بنجاح.' };
+          logActivity(newPassword ? 'تم حفظ الإعدادات مع تغيير كلمة السر.' : 'تم حفظ الإعدادات.');
+          break;
+        }
+
+        case 'do-login': {
+          const input = document.getElementById('loginPassword');
+          const val = input ? input.value : '';
+          if (val === state.settings.password) {
+            state.auth.loggedIn = true;
+            state.auth.role = 'admin';
+            state.loginError = false;
+            state.currentPage = 'dashboard';
+            logActivity('تم تسجيل الدخول إلى لوحة التحكم (صلاحيات كاملة).');
+          } else if (val && val === state.settings.staffPassword) {
+            state.auth.loggedIn = true;
+            state.auth.role = 'staff';
+            state.loginError = false;
+            state.currentPage = 'dashboard';
+            logActivity('تم تسجيل دخول موظف بصلاحيات محدودة (حجز مواعيد).');
+          } else {
+            state.loginError = true;
+          }
+          break;
+        }
+        case 'logout':
+          state.auth.loggedIn = false;
+          state.auth.role = null;
+          state.currentPage = 'dashboard';
+          logActivity('تم تسجيل الخروج من لوحة التحكم.');
+          break;
+
+        case 'save-appointment': {
+          const patientSelectVal = document.getElementById('formApptPatientSelect').value;
+          const isNewPatient = patientSelectVal === '__new__';
+          let patientName = '';
+          let patientPhone = '';
+
+          if (isNewPatient) {
+            patientName = document.getElementById('formApptNewPatientName').value.trim();
+            patientPhone = document.getElementById('formApptNewPatientPhone')?.value.trim() || '';
+          } else if (patientSelectVal) {
+            const existingPatient = state.patients.find((p) => p.id === Number(patientSelectVal));
+            if (existingPatient) {
+              patientName = existingPatient.name;
+              patientPhone = existingPatient.phone || '';
+            }
+          }
+
+          const doctorId = Number(document.getElementById('formApptDoctor').value);
+          const visitType = document.getElementById('formApptVisitType').value;
+          const service = document.getElementById('formApptService').value;
+          const dateRaw = document.getElementById('formApptDate').value;
+          const timeRaw = document.getElementById('formApptTime').value;
+          const date = formatArabicDate(dateRaw);
+          const time = formatArabicTime(timeRaw);
+          
+          if (!patientName || !doctorId || !date || !time) { 
+            showToast('من فضلك أكمل بيانات الموعد (المريض، الطبيب، اليوم، الوقت)', 'error'); 
+            return false; 
+          }
+          
+          if (patientPhone && !validatePhone(patientPhone)) {
+            showToast('رقم الموبايل غير صحيح (يجب أن يكون 10-11 رقم)', 'error');
+            return false;
+          }
+
+          const apptDoctor = state.doctors.find((d) => d.id === doctorId);
+          const apptDayName = dateISOToArabicDayName(dateRaw);
+          if (apptDoctor && apptDoctor.workingDays && apptDoctor.workingDays.length && apptDayName && !apptDoctor.workingDays.includes(apptDayName)) {
+            showToast(`${apptDoctor.name} مش متاح يوم ${apptDayName}، أيام عمله: ${apptDoctor.workingDays.join('، ')}`, 'error');
+            return false;
+          }
+          if (apptDoctor) {
+            const doctorFrom = apptDoctor.workingFrom || '09:00';
+            const doctorTo = apptDoctor.workingTo || '21:00';
+            if (timeRaw < doctorFrom || timeRaw >= doctorTo) {
+              showToast(`${apptDoctor.name} متاح من ${doctorFrom} إلى ${doctorTo} بس`, 'error');
+              return false;
+            }
+          }
+
+          const timeKey = timeRaw; // input[type=time] بيدي صيغة "HH:MM" جاهزة
+          const conflict = findApptConflict(doctorId, dateRaw, timeKey, null);
+          if (conflict) {
+            const conflictDoctor = state.doctors.find((d) => d.id === doctorId);
+            showToast(`الميعاد ده محجوز بالفعل عند ${conflictDoctor ? esc(conflictDoctor.name) : 'الطبيب'} الساعة ${esc(time)}، اختار وقت تاني من فضلك`, 'error');
+            return false;
+          }
+
+          if (isNewPatient) {
+            state.patients.push({
+              id: state.nextId.patient++,
+              name: patientName,
+              phone: patientPhone,
+              initials: initials(patientName),
+              visits: 0,
+              lastVisit: '—',
+              status: 'active',
+              allergies: '',
+              chronicConditions: '',
+              medicalHistory: [],
+            });
+            logActivity(`تم إضافة مريض جديد من شاشة حجز المواعيد: ${patientName}`);
+          }
+          
+          state.appointments.push({ 
+            id: state.nextId.appointment++, 
+            doctorId, 
+            patientName, 
+            patientPhone,
+            service, 
+            visitType,
+            date, 
+            dateISO: dateRaw, 
+            time, 
+            timeKey,
+            status: 'pending', 
+            paid: false 
+          });
+
+          state.modal = null;
+          logActivity(`تم حجز موعد جديد للمريض: ${patientName}`);
+          saveState();
+          break;
+        }
+        case 'confirm-appt': {
+          const a = state.appointments.find((a) => a.id === id);
+          a.status = 'confirmed';
+          const patientForVisit = state.patients.find((p) => p.name === a.patientName);
+          if (patientForVisit) {
+            patientForVisit.visits = (patientForVisit.visits || 0) + 1;
+            patientForVisit.lastVisit = formatArabicDateFull(a.dateISO);
+          }
+          logActivity(`تم تأكيد موعد: ${a.patientName}`);
+          saveState();
+          break;
+        }
+        case 'cancel-appt': {
+          const a = state.appointments.find((a) => a.id === id);
+          a.status = 'cancelled';
+          logActivity(`تم إلغاء موعد: ${a.patientName}`);
+          saveState();
+          break;
+        }
+        case 'delete-appt':
+          state.modal = { type: 'confirm', message: 'متأكد إنك عايز تحذف الموعد ده؟', confirmAction: 'confirm-delete-appt', targetId: id };
+          break;
+        case 'confirm-delete-appt': {
+          const a = state.appointments.find((a) => a.id === id);
+          state.appointments = state.appointments.filter((a) => a.id !== id);
+          state.modal = null;
+          if (a) logActivity(`تم حذف موعد: ${a.patientName}`);
+          saveState();
+          break;
+        }
+        case 'toggle-paid': {
+          const a = state.appointments.find((a) => a.id === id);
+          a.paid = !a.paid;
+          logActivity(`تم تسجيل موعد ${a.patientName} كـ${a.paid ? 'مدفوع' : 'معلّق'}`);
+          saveState();
+          break;
+        }
+
+        case 'calendar-prev-week':
+          state.calendarWeekStart = addDaysISO(state.calendarWeekStart, -7);
+          break;
+        case 'calendar-next-week':
+          state.calendarWeekStart = addDaysISO(state.calendarWeekStart, 7);
+          break;
+        case 'calendar-today':
+          state.calendarWeekStart = startOfWeekSaturday('2026-09-06');
+          break;
+
+        case 'clear-activity-log':
+          state.modal = { type: 'confirm', message: 'متأكد إنك عايز تمسح سجل النشاط بالكامل؟', confirmAction: 'confirm-clear-activity-log', targetId: null };
+          break;
+        case 'confirm-clear-activity-log':
+          state.activityLog = [];
+          state.modal = null;
+          break;
+
+        case 'select-service':
+          state.booking.service = el.dataset.value;
+          break;
+        case 'select-visit-type':
+          state.booking.visitType = el.dataset.value;
+          break;
+        case 'select-doctor':
+          state.booking.doctorId = id;
+          // لو غيّر الطبيب، نفضّي الوقت المختار عشان يتفلتر على مواعيد الطبيب الجديد
+          state.booking.hour = null;
+          state.booking.minute = null;
+          state.booking.period = null;
+          break;
+        case 'confirm-booking': {
+          const b = state.booking;
+          if (!b.visitType) { showToast('اختر نوع الكشف من فضلك', 'error'); return false; }
+          if (!b.service) { showToast('اختر الخدمة من فضلك', 'error'); return false; }
+          if (!b.doctorId) { showToast('اختر الطبيب من فضلك', 'error'); return false; }
+          if (!b.dateLabel) { showToast('اختر التاريخ من فضلك', 'error'); return false; }
+          if (!b.hour || !b.minute || !b.period) { showToast('اختر الوقت بالكامل من فضلك', 'error'); return false; }
+          if (!validateName(b.name)) { showToast('الاسم يجب أن يكون أكثر من حرفين', 'error'); return false; }
+          if (!validatePhone(b.phone)) { showToast('رقم الموبايل غير صحيح', 'error'); return false; }
+
+          const bookingDoctor = state.doctors.find((d) => d.id === b.doctorId);
+          const bookingDayName = dateISOToArabicDayName(b.dateValue);
+          if (bookingDoctor && bookingDoctor.workingDays && bookingDoctor.workingDays.length && bookingDayName && !bookingDoctor.workingDays.includes(bookingDayName)) {
+            showToast(`${bookingDoctor.name} مش متاح يوم ${bookingDayName}، أيام عمله: ${bookingDoctor.workingDays.join('، ')}`, 'error');
+            return false;
+          }
+
+          const bookingTimeKey = to24HourKey(b.hour, b.minute, b.period);
+          if (bookingDoctor) {
+            const doctorFrom = bookingDoctor.workingFrom || '09:00';
+            const doctorTo = bookingDoctor.workingTo || '21:00';
+            if (bookingTimeKey < doctorFrom || bookingTimeKey >= doctorTo) {
+              showToast(`${bookingDoctor.name} متاح من ${doctorFrom} إلى ${doctorTo} بس، اختار وقت في النطاق ده`, 'error');
+              return false;
+            }
+          }
+          const bookingConflict = findApptConflict(b.doctorId, b.dateValue, bookingTimeKey, null);
+          if (bookingConflict) {
+            showToast('المعاد ده محجوز عند الدكتور، من فضلك اختر وقت تاني', 'error');
+            return false;
+          }
+
+          state.appointments.push({
+            id: state.nextId.appointment++,
+            doctorId: b.doctorId,
+            patientName: b.name,
+            patientPhone: b.phone,
+            service: b.service,
+            visitType: b.visitType,
+            date: b.dateLabel,
+            dateISO: b.dateValue || null,
+            time: `${b.hour}:${b.minute} ${b.period}`,
+            timeKey: bookingTimeKey,
+            status: 'pending',
+            paid: false,
+          });
+          state.booking = { service: null, visitType: null, doctorId: null, date: null, done: true };
+          logActivity(`حجز جديد من صفحة الحجز العامة: ${b.name}`);
+          saveState();
+          break;
+        }
+        case 'booking-new':
+          state.booking = { service: null, visitType: null, doctorId: null, date: null, done: false };
+          break;
+
+        case 'toggle-theme':
+          state.theme = state.theme === 'light' ? 'dark' : 'light';
+          break;
+
+        case 'toggle-sidebar':
+          state.sidebarOpen = !state.sidebarOpen;
+          break;
+        case 'close-sidebar':
+          state.sidebarOpen = false;
+          break;
+      }
+  return true;
+}
+
+render();
+</script>
+</body>
+</html>
