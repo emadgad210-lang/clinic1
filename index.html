@@ -378,9 +378,9 @@ const state = {
       allergies: '', chronicConditions: '', medicalHistory: [] },
   ],
   appointments: [
-    { id: 1, doctorId: 1, patientName: 'منى إبراهيم', service: 'كشف', visitType: 'عادي', date: 'الأحد ٦ سبتمبر', dateISO: '2026-09-06', time: '٩:٠٠ ص', timeKey: '09:00', status: 'confirmed', paid: true },
+    { id: 1, doctorId: 1, patientName: 'منى إبراهيم', service: 'كشف عام', visitType: 'عادي', date: 'الأحد ٦ سبتمبر', dateISO: '2026-09-06', time: '٩:٠٠ ص', timeKey: '09:00', status: 'confirmed', paid: true },
     { id: 2, doctorId: 2, patientName: 'كريم عادل', service: 'متابعة', visitType: 'متابعة', date: 'الأحد ٦ سبتمبر', dateISO: '2026-09-06', time: '١٠:٠٠ ص', timeKey: '10:00', status: 'pending', paid: false },
-    { id: 3, doctorId: 1, patientName: 'هدى وائل', service: 'كشف', visitType: 'مستعجل', date: 'الأحد ٦ سبتمبر', dateISO: '2026-09-06', time: '١١:٠٠ ص', timeKey: '11:00', status: 'cancelled', paid: false },
+    { id: 3, doctorId: 1, patientName: 'هدى وائل', service: 'كشف عام', visitType: 'مستعجل', date: 'الأحد ٦ سبتمبر', dateISO: '2026-09-06', time: '١١:٠٠ ص', timeKey: '11:00', status: 'cancelled', paid: false },
   ],
   nextId: { patient: 100, doctor: 100, appointment: 100, service: 100, medicalEntry: 100, expense: 100, activity: 1, toast: 1 },
   toasts: [], // { id, text, type: 'success'|'error'|'info' }
@@ -397,7 +397,7 @@ const state = {
     workingTo: '21:00',
   },
   services: [
-    { id: 1, name: 'كشف', price: 150 },
+    { id: 1, name: 'كشف عام', price: 150 },
     { id: 2, name: 'متابعة', price: 80 },
     { id: 3, name: 'كشف مستعجل', price: 220 },
   ],
@@ -528,9 +528,19 @@ function loadStateFromLocalStorage() {
       const loaded = JSON.parse(saved);
       // دمج البيانات المحفوظة مع الحالة الحالية
       Object.assign(state, loaded);
+      // توافق: إعادة تسمية الخدمة القديمة "كشف" إلى "كشف عام" بدل تكرارها
+      if (Array.isArray(state.services)) {
+        const oldGeneral = state.services.find((sv) => sv.name === 'كشف');
+        if (oldGeneral && !state.services.some((sv) => sv.name === 'كشف عام')) {
+          oldGeneral.name = 'كشف عام';
+          if (Array.isArray(state.appointments)) {
+            state.appointments.forEach((a) => { if (a.service === 'كشف') a.service = 'كشف عام'; });
+          }
+        }
+      }
       // توافق: إضافة أي خدمات افتراضية جديدة غير موجودة في البيانات المحفوظة القديمة (بدون مسح بيانات المستخدم)
       const defaultServices = [
-        { id: 1, name: 'كشف', price: 150 },
+        { id: 1, name: 'كشف عام', price: 150 },
         { id: 2, name: 'متابعة', price: 80 },
         { id: 3, name: 'كشف مستعجل', price: 220 },
       ];
